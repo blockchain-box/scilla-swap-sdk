@@ -1,0 +1,25 @@
+{
+  "name": "carbon-swap-sdk",
+  "version": "1.0.0",
+  "description": "Carbon Swap contract SDK",
+  "main": "index.js",
+  "scripts": {},
+  "dependencies": {
+    "@zilliqa-js/account": "^3.3.3",
+    "@zilliqa-js/contract": "^3.3.3",
+    "@zilliqa-js/crypto": "^3.3.3",
+    "@zilliqa-js/subscriptions": "^3.3.3",
+    "@zilliqa-js/util": "^3.3.3",
+    "@zilliqa-js/zilliqa": "^3.3.3"
+  },
+  "keywords": [
+    "carbon",
+    "zilliqa",
+    "graphene",
+    "zil",
+    "carb",
+    "grph"
+  ],
+  "author": "Anas Saber",
+  "license": "ISC"
+}

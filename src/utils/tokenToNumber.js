@@ -1,0 +1,1 @@
+module.exports = (number, decimal) => (parseFloat((BigInt(number) / BigInt(10 ** parseInt(decimal))).toString())).toFixed(parseInt(decimal));
