@@ -277,17 +277,19 @@ module.exports = class SwapService {
     }
 
     async priceOfTokenInOtherToken(fromAddress, toAddress) {
+        const fetcher = this._zilliqa.contracts.at(fromAddress);
+        const decimals = parseInt((await fetcher.getInit()).find(({vname}) => vname === "decimals").value);
+
         if (fromAddress.toLowerCase() === toAddress.toLowerCase()) {
-            return 1.00;
+            return (1).toFixed(decimals);
         }
 
         if (fromAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
-
+            const tokenPrice = await this.priceOfTokenInCarb(toAddress);
+            return (1 / tokenPrice).toFixed(decimals);
         } else if (toAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
             return this.priceOfTokenInCarb(fromAddress);
         } else {
-            const fetcher = this._zilliqa.contracts.at(fromAddress);
-            const decimals = (await fetcher.getInit()).find(({vname}) => vname === "decimals").value;
             const rate_token1 = await this.priceOfTokenInCarb(fromAddress);
             const rate_token2 = await this.priceOfTokenInCarb(toAddress);
             return parseFloat((rate_token1 / rate_token2).toFixed(decimals));
