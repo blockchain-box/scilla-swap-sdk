@@ -284,8 +284,7 @@ module.exports = class SwapService {
     }
 
     async priceOfTokenInOtherToken(fromAddress, toAddress) {
-        const fetcher = this._zilliqa.contracts.at(fromAddress);
-        const decimals = parseInt((await fetcher.getInit()).find(({vname}) => vname === "decimals").value);
+        const decimals = await this.getDecimalsOfToken(fromAddress);
 
         if (fromAddress.toLowerCase() === toAddress.toLowerCase()) {
             return (1).toFixed(decimals);
