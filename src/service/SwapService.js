@@ -248,6 +248,14 @@ module.exports = class SwapService {
         this._min = min;
     }
 
+    get deadlineBlock() {
+        return this._deadline_block;
+    }
+
+    get min() {
+        return this._min;
+    }
+
     async getState() {
         return this._fetcher.getState();
     }
