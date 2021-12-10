@@ -273,7 +273,7 @@ module.exports = class SwapService {
         const decimals = (await fetcher.getInit()).find(({vname}) => vname === "decimals").value;
         const state = await this._fetcher.getState();
         const token_pool = state[fields.pools.pools][token_address];
-        return tokenToNumber(token_pool.arguments[1], decimals) / tokenToNumber(token_pool.arguments[0], 8);
+        return tokenToNumber(token_pool.arguments[0], 8) / tokenToNumber(token_pool.arguments[1], decimals);
     }
 
     async priceOfTokenInOtherToken(fromAddress, toAddress) {
