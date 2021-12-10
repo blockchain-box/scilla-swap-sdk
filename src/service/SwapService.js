@@ -229,13 +229,16 @@ const SwapTokenForTokenDTO = require("../dto/SwapTokenForTokenDTO");
 const SwapCarbForTokenDTO = require("../dto/SwapCarbForTokenDTO");
 const SwapTokenForCarbDTO = require("../dto/SwapTokenForCarbDTO");
 
+const SwapValue = require("../value/SwapValue");
+
 module.exports = class SwapService {
-    constructor({contractAddress, host, nodeAPI, carbAddress}) {
+    constructor({contractAddress, host, nodeAPI, carbAddress, graphAddress}) {
         this._address = contractAddress;
         this._host = host;
         this._zilliqa = new Zilliqa(nodeAPI);
         this._fetcher = this._zilliqa.contracts.at(contractAddress);
         this._carbAddress = carbAddress;
+        this._graphAddress = graphAddress;
         this._deadline_block = 10;
         this._min = 0.01;
     }
@@ -268,9 +271,13 @@ module.exports = class SwapService {
         return 0.00;
     }
 
-    async priceOfTokenInCarb(token_address) {
+    async getDecimalsOfToken(token_address) {
         const fetcher = this._zilliqa.contracts.at(token_address);
-        const decimals = (await fetcher.getInit()).find(({vname}) => vname === "decimals").value;
+        return (await fetcher.getInit()).find(({vname}) => vname === "decimals").value;
+    }
+
+    async priceOfTokenInCarb(token_address) {
+        const decimals = await this.getDecimalsOfToken();
         const state = await this._fetcher.getState();
         const token_pool = state[fields.pools.pools][token_address];
         return tokenToNumber(token_pool.arguments[0], 8) / tokenToNumber(token_pool.arguments[1], decimals);
@@ -288,11 +295,12 @@ module.exports = class SwapService {
             const tokenPrice = await this.priceOfTokenInCarb(toAddress);
             return (1 / tokenPrice).toFixed(decimals);
         } else if (toAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
-            return this.priceOfTokenInCarb(fromAddress);
+            const price = await this.priceOfTokenInCarb(fromAddress);
+            return parseFloat(price).toFixed(decimals);
         } else {
             const rate_token1 = await this.priceOfTokenInCarb(fromAddress);
             const rate_token2 = await this.priceOfTokenInCarb(toAddress);
-            return parseFloat((rate_token1 / rate_token2).toFixed(decimals));
+            return parseFloat((rate_token1 / rate_token2)).toFixed(decimals);
         }
     }
 
@@ -365,6 +373,119 @@ module.exports = class SwapService {
             recipient_address: tokenToTokenDTO.recipientAddress,
             avatar: tokenToTokenDTO.avatar,
             is_transfer: tokenToTokenDTO.isTransfer
+        });
+    }
+
+    async calculateSwapToAmount({fromAddress, toAddress, fromAmount}) {
+        if (fromAmount.toLowerCase() === toAddress.toLowerCase()) {
+            return fromAmount;
+        }
+        const price = await this.priceOfTokenInOtherToken(fromAddress, toAddress);
+        return price * fromAmount;
+    }
+
+    //TODO
+    async getPriceImpact({fromAddress, toAddress, fromAmount}) {
+        if (fromAmount.toLowerCase() === toAddress.toLowerCase()) {
+            return 0;
+        }
+        return 1;
+    }
+
+    async getSwapFees({fromAddress, fromAmount}) {
+        const state = await this._fetcher.getState();
+        const fees = parseInt(state[fields.output_after_fee.output_after_fee]) / 10000;
+        if (fromAddress.toLowerCase() == this._carbAddress.toLowerCase()) {
+            return fromAmount * fees;
+        }
+        const price = await this.priceOfTokenInOtherToken(fromAddress, this._carbAddress);
+        return (price * fromAmount) * fees;
+    }
+
+    async getSwapRewards({fromAddress, fromAmount}) {
+        const fees = await this.getSwapFees({fromAddress, fromAmount});
+        const price = await this.priceOfTokenInOtherToken(this._carbAddress, this._graphAddress);
+        return fees * price;
+    }
+
+    async getSwapTokenToTokenCall({
+                                      fromAddress,
+                                      toAddress,
+                                      fromAmount,
+                                      avatar = "empty",
+                                      isTransfer,
+                                      recipientAddress
+                                  }) {
+        if (fromAddress.toLowerCase() === toAddress.toLowerCase()) {
+            throw new Error("no allowed to swap for same token");
+        }
+        const price = await this.priceOfTokenInOtherToken(fromAddress, toAddress);
+        if (fromAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
+            const decimals = await this.getDecimalsOfToken(toAddress);
+            const carbAmount = parseFloat(fromAmount) * 10 ** 8;
+            const toAmount = parseFloat(price) * parseFloat(fromAmount);
+            const amount = (toAmount * 10 ** parseInt(decimals));
+            const tokenAmount = amount - (amount * this.min);
+            const params = await this.getCarbToTokenParams(new SwapCarbForTokenDTO({
+                carbAmount,
+                minTokenAmount: tokenAmount,
+                tokenAddress: toAddress,
+                avatar,
+                isTransfer,
+                recipientAddress,
+            }));
+            return new SwapValue({
+                tag: "SwapExactCarbForTokens",
+                params,
+                fees: await this.getSwapFees({fromAddress, fromAmount}),
+                priceImpact: await this.getPriceImpact({fromAddress, toAddress, fromAmount}),
+                swapRewards: await this.getSwapRewards({fromAddress, fromAmount}),
+            });
+        } else if (toAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
+            const decimals = await this.getDecimalsOfToken(fromAddress);
+            const tokenAmount = fromAmount * 10 ** parseInt(decimals);
+            const toAmount = parseFloat(price) * parseFloat(fromAmount);
+            const amount = (toAmount * 10 ** 8);
+            const carbAmount = amount - (amount * this.min);
+            const params = await this.getTokenToCarbParams(new SwapTokenForCarbDTO({
+                recipientAddress,
+                avatar,
+                isTransfer,
+                tokenAddress: fromAddress,
+                tokenAmount,
+                minCarbAmount: carbAmount,
+            }));
+            return new SwapValue({
+                tag: "SwapExactTokensForCarb",
+                params,
+                fees: await this.getSwapFees({fromAddress, fromAmount}),
+                priceImpact: await this.getPriceImpact({fromAddress, toAddress, fromAmount}),
+                swapRewards: await this.getSwapRewards({fromAddress, fromAmount}),
+            });
+        }
+
+        const fromDecimals = await this.getDecimalsOfToken(fromAddress);
+        const toDecimals = await this.getDecimalsOfToken(toAddress);
+
+        const toAmount = parseFloat(price) * parseFloat(fromAmount);
+        const amount = (toAmount * 10 ** toDecimals);
+        const tokenAmount = amount - (amount * this.min);
+        const params = await this.getTokenToTokenParams(new SwapTokenForTokenDTO({
+            toAddress,
+            fromAddress,
+            isTransfer,
+            recipientAddress,
+            avatar,
+            fromAmount: fromAmount * 10 ** fromDecimals,
+            minToAmount: tokenAmount,
+        }));
+
+        return new SwapValue({
+            tag: "SwapExactTokensForTokens",
+            params,
+            fees: await this.getSwapFees({fromAddress, fromAmount}),
+            priceImpact: await this.getPriceImpact({fromAddress, toAddress, fromAmount}),
+            swapRewards: await this.getSwapRewards({fromAddress, fromAmount}),
         });
     }
 }
