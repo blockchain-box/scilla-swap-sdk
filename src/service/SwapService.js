@@ -539,15 +539,15 @@ module.exports = class SwapService {
     }
 
     async getTokens(forAddress) {
-        const state = await this._fetcher.getSubState(fields.pools.pools);
-        if (state) {
-            const pools = state[fields.pools.pools];
+        const SwapState = await this._fetcher.getSubState(fields.pools.pools);
+        if (SwapState) {
+            const pools = SwapState[fields.pools.pools];
             const tokens = await Promise.all(Object.keys(pools).map(async token_address => {
                 if (token_address.toLowerCase() === zil_address) {
-                    const {balance} = await this._zilliqa.blockchain.getBalance(forAddress.toLowerCase());
+                    const {result} = await this._zilliqa.blockchain.getBalance(forAddress.toLowerCase());
                     return {
                         decimals: 12,
-                        balance: balance ? balance : "0",
+                        balance: result && result.balance ? result.balance : "0",
                         symbol: "zil",
                         name: "zilliqa",
                         address: zil_address,
@@ -574,6 +574,7 @@ module.exports = class SwapService {
             const symbol = "zilliqa";
             tokens.push({
                 address: this._carbAddress,
+                decimals: 8,
                 balance,
                 symbol: "CARB",
                 name: "CARBON",
