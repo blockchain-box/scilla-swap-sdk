@@ -239,6 +239,7 @@ const mapTestToMainAddresses = {
     "0x984219c0d7a9ebd54b433792232b69c99e78b538": "0xa3eAFd5021F6B9c36fD02Ed58aa1d015F2238791", // stream
     "0xc2e8a69f162d59935430eb936467f23ff4091f27": "0x34E77F91FBa80C6555fDf4A23FB132ABbaCE8AaF", // graph
     "0xed9f4be52d589ca7ec778a2185a5fa705a1d6bcc": "0xa845C1034CD077bD8D32be0447239c7E4be6cb21", // gzil
+    "0xc5c5f8786574522e83242e5981482d63c9ac7101": "0xbF79E16872fAd92C16810ddD2A7B9B6858C7b756", //carb
 };
 
 const {toBech32Address} = require("@zilliqa-js/crypto");
@@ -566,6 +567,18 @@ module.exports = class SwapService {
                 token.logo = `https://meta.viewblock.io/${symbol}.${bech32}/logo`;
                 return token;
             }));
+            const tokenFetcher = this._zilliqa.contracts.at(this._carbAddress);
+            const state = await tokenFetcher.getSubState("balances", forAddress.toLowerCase());
+            const balance = state ? state["balances"][forAddress.toLowerCase()] : "0";
+            const bech32 = toBech32Address(mapTestToMainAddresses[this._carbAddress] ? mapTestToMainAddresses[this._carbAddress] : token_address);
+            const symbol = "zilliqa";
+            tokens.push({
+                address: this._carbAddress,
+                balance,
+                symbol: "CARB",
+                name: "CARBON",
+                logo: `https://meta.viewblock.io/${symbol}.${bech32}/logo`
+            });
             return tokens;
         }
         return [];
