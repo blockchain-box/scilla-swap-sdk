@@ -273,11 +273,12 @@ module.exports = class SwapService {
 
     async getDecimalsOfToken(token_address) {
         const fetcher = this._zilliqa.contracts.at(token_address);
-        return (await fetcher.getInit()).find(({vname}) => vname === "decimals").value;
+        const init = await fetcher.getInit();
+        return init.find(({vname}) => vname === "decimals").value;
     }
 
     async priceOfTokenInCarb(token_address) {
-        const decimals = await this.getDecimalsOfToken();
+        const decimals = await this.getDecimalsOfToken(token_address);
         const state = await this._fetcher.getState();
         const token_pool = state[fields.pools.pools][token_address];
         return tokenToNumber(token_pool.arguments[0], 8) / tokenToNumber(token_pool.arguments[1], decimals);
