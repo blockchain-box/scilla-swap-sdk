@@ -526,4 +526,21 @@ module.exports = class SwapService {
             zilAmount: fromAddress.toLowerCase() === zil_address ? fromAmount * 10 ** fromDecimals : 0,
         });
     }
+
+    async getTokens() {
+        const fetcher = this._zilliqa.contracts.at(this._address);
+        const state = await fetcher.getSubState(fields.pools.pools);
+        if (state) {
+            const pools = state[fields.pools.pools];
+            return Promise.all(Object.keys(pools).map(async token_address => {
+                const tokenFetcher = this._zilliqa.contracts.at(token_address);
+                const init = await tokenFetcher.getInit();
+                return init.reduce((acc, param) => ({
+                    ...acc,
+                    [param.vname]: param.value
+                }), {});
+            }));
+        }
+        return [];
+    }
 }
