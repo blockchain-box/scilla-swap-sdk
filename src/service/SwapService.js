@@ -233,6 +233,16 @@ const SwapValue = require("../value/SwapValue");
 
 const zil_address = "0x0000000000000000000000000000000000000000";
 
+const mapTestToMainAddresses = {
+    "0x42c15375aa554080488ab10c0c4e6fcf1edc9eb5": "0x3A683Fdc022b26D755c70E9ed7cFCc446658018b", // port
+    "0x94677f06ad3046bd7c793fcb179ca79c822e6dd5": "0x153FeaddC48871108e286de3304B9597c817B456", // xCAD
+    "0x984219c0d7a9ebd54b433792232b69c99e78b538": "0xa3eAFd5021F6B9c36fD02Ed58aa1d015F2238791", // stream
+    "0xc2e8a69f162d59935430eb936467f23ff4091f27": "0x34E77F91FBa80C6555fDf4A23FB132ABbaCE8AaF", // graph
+    "0xed9f4be52d589ca7ec778a2185a5fa705a1d6bcc": "0xa845C1034CD077bD8D32be0447239c7E4be6cb21", // gzil
+};
+
+const {toBech32Address} = require("@zilliqa-js/crypto");
+
 module.exports = class SwapService {
     constructor({contractAddress, host, nodeAPI, carbAddress, graphAddress}) {
         this._address = contractAddress;
@@ -528,11 +538,10 @@ module.exports = class SwapService {
     }
 
     async getTokens(forAddress) {
-        const fetcher = this._zilliqa.contracts.at(this._address);
-        const state = await fetcher.getSubState(fields.pools.pools);
+        const state = await this._fetcher.getSubState(fields.pools.pools);
         if (state) {
             const pools = state[fields.pools.pools];
-            return Promise.all(Object.keys(pools).map(async token_address => {
+            const tokens = await Promise.all(Object.keys(pools).map(async token_address => {
                 if (token_address.toLowerCase() === zil_address) {
                     const {balance} = await this._zilliqa.blockchain.getBalance(forAddress.toLowerCase());
                     return {
@@ -540,18 +549,24 @@ module.exports = class SwapService {
                         balance: balance ? balance : "0",
                         symbol: "zil",
                         name: "zilliqa",
-                        address: zil_address
+                        address: zil_address,
+                        logo: "https://meta.viewblock.io/ZIL/logo",
                     };
                 }
                 const tokenFetcher = this._zilliqa.contracts.at(token_address);
                 const init = await tokenFetcher.getInit();
                 const state = await tokenFetcher.getSubState("balances", forAddress.toLowerCase());
                 const balance = state ? state["balances"][forAddress.toLowerCase()] : "0";
-                return init.reduce((acc, param) => ({
+                const token = init.reduce((acc, param) => ({
                     ...acc,
-                    [param.vname]: param.value
+                    [param.vname]: param.value,
                 }), {balance, address: token_address});
+                const bech32 = toBech32Address(mapTestToMainAddresses[token_address] ? mapTestToMainAddresses[token_address] : token_address);
+                const symbol = "zilliqa";
+                token.logo = `https://meta.viewblock.io/${symbol}.${bech32}/logo`;
+                return token;
             }));
+            return tokens;
         }
         return [];
     }
