@@ -259,6 +259,18 @@ module.exports = class SwapService {
         return this._min;
     }
 
+    get carbAddress() {
+        return this._carbAddress;
+    }
+
+    get graphAddress() {
+        return this._graphAddress;
+    }
+
+    get swapAddress() {
+        return this._address;
+    }
+
     async getState() {
         return this._fetcher.getState();
     }
