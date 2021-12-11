@@ -231,6 +231,8 @@ const SwapTokenForCarbDTO = require("../dto/SwapTokenForCarbDTO");
 
 const SwapValue = require("../value/SwapValue");
 
+const zil_address = "0x0000000000000000000000000000000000000000";
+
 module.exports = class SwapService {
     constructor({contractAddress, host, nodeAPI, carbAddress, graphAddress}) {
         this._address = contractAddress;
@@ -473,6 +475,7 @@ module.exports = class SwapService {
                 fees: await this.getSwapFees({fromAddress, fromAmount}),
                 priceImpact: await this.getPriceImpact({fromAddress, toAddress, fromAmount}),
                 swapRewards: await this.getSwapRewards({fromAddress, fromAmount}),
+                zilAmount: 0
             });
         } else if (toAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
             const decimals = await this.getDecimalsOfToken(fromAddress);
@@ -494,6 +497,7 @@ module.exports = class SwapService {
                 fees: await this.getSwapFees({fromAddress, fromAmount}),
                 priceImpact: await this.getPriceImpact({fromAddress, toAddress, fromAmount}),
                 swapRewards: await this.getSwapRewards({fromAddress, fromAmount}),
+                zilAmount: fromAddress.toLowerCase() === zil_address ? tokenAmount : 0,
             });
         }
 
@@ -519,6 +523,7 @@ module.exports = class SwapService {
             fees: await this.getSwapFees({fromAddress, fromAmount}),
             priceImpact: await this.getPriceImpact({fromAddress, toAddress, fromAmount}),
             swapRewards: await this.getSwapRewards({fromAddress, fromAmount}),
+            zilAmount: fromAddress.toLowerCase() === zil_address ? fromAmount * 10 ** fromDecimals : 0,
         });
     }
 }
