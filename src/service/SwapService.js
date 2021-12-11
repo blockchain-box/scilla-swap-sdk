@@ -278,9 +278,15 @@ module.exports = class SwapService {
     }
 
     async priceOfTokenInCarb(token_address) {
+        if (this._carbAddress.toLowerCase() === token_address.toLowerCase()) {
+            throw new Error("not allowed to find price of carb in carb");
+        }
         const decimals = await this.getDecimalsOfToken(token_address);
         const state = await this._fetcher.getState();
         const token_pool = state[fields.pools.pools][token_address];
+        if (!token_pool) {
+            throw new Error("no pool found for address: " + token_address);
+        }
         return tokenToNumber(token_pool.arguments[0], 8) / tokenToNumber(token_pool.arguments[1], decimals);
     }
 
@@ -305,8 +311,8 @@ module.exports = class SwapService {
     }
 
     async getBlockNumber() {
-        const {result} = this._zilliqa.blockchain.getNumTxBlocks();
-        return parseInt(result);
+        const {result} = await this._zilliqa.blockchain.getNumTxBlocks();
+        return parseInt(result ? result : "100");
     }
 
     async calcTokenAmountInOtherAmount({fromAddress, fromAmount, toAddress}) {
@@ -351,6 +357,7 @@ module.exports = class SwapService {
 
     async getTokenToCarbParams(tokenToCarbDTO = new SwapTokenForCarbDTO({})) {
         const blockNum = await this.getBlockNumber();
+
         return transitions.SwapExactTokensForCarb({
             token_address: tokenToCarbDTO.tokenAddress,
             min_carb_amount: tokenToCarbDTO.minCarbAmount,
@@ -364,6 +371,20 @@ module.exports = class SwapService {
 
     async getTokenToTokenParams(tokenToTokenDTO = new SwapTokenForTokenDTO({})) {
         const blockNum = await this.getBlockNumber();
+
+        if (this._min === 0.0) {
+            return transitions.SwapTokensForExactTokens({
+                token0_address: tokenToTokenDTO.fromAddress,
+                token1_address: tokenToTokenDTO.toAddress,
+                max_token0_amount: tokenToTokenDTO.fromAmount,
+                token1_amount: tokenToTokenDTO.minToAmount,
+                deadline_block: blockNum + this._deadline_block,
+                recipient_address: tokenToTokenDTO.recipientAddress,
+                avatar: tokenToTokenDTO.avatar,
+                is_transfer: tokenToTokenDTO.isTransfer,
+            });
+        }
+
         return transitions.SwapExactTokensForTokens({
             token0_address: tokenToTokenDTO.fromAddress,
             token1_address: tokenToTokenDTO.toAddress,
@@ -386,7 +407,7 @@ module.exports = class SwapService {
 
     //TODO
     async getPriceImpact({fromAddress, toAddress, fromAmount}) {
-        if (fromAmount.toLowerCase() === toAddress.toLowerCase()) {
+        if (fromAddress.toLowerCase() === toAddress.toLowerCase()) {
             return 0;
         }
         return 1;
@@ -394,7 +415,7 @@ module.exports = class SwapService {
 
     async getSwapFees({fromAddress, fromAmount}) {
         const state = await this._fetcher.getState();
-        const fees = parseInt(state[fields.output_after_fee.output_after_fee]) / 10000;
+        const fees = parseInt(state[fields.output_after_fee.output_after_fee]) / 1000000;
         if (fromAddress.toLowerCase() == this._carbAddress.toLowerCase()) {
             return fromAmount * fees;
         }
