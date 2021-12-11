@@ -533,6 +533,16 @@ module.exports = class SwapService {
         if (state) {
             const pools = state[fields.pools.pools];
             return Promise.all(Object.keys(pools).map(async token_address => {
+                if (token_address.toLowerCase() === zil_address) {
+                    const {balance} = await this._zilliqa.blockchain.getBalance(forAddress.toLowerCase());
+                    return {
+                        decimals: 12,
+                        balance: balanc ? balance : "0",
+                        symbol: "zil",
+                        name: "zilliqa",
+                        address: zil_address
+                    };
+                }
                 const tokenFetcher = this._zilliqa.contracts.at(token_address);
                 const init = await tokenFetcher.getInit();
                 const state = await tokenFetcher.getSubState("balances", forAddress.toLowerCase());
