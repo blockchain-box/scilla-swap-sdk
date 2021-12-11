@@ -527,7 +527,7 @@ module.exports = class SwapService {
         });
     }
 
-    async getTokens() {
+    async getTokens(forAddress) {
         const fetcher = this._zilliqa.contracts.at(this._address);
         const state = await fetcher.getSubState(fields.pools.pools);
         if (state) {
@@ -535,10 +535,12 @@ module.exports = class SwapService {
             return Promise.all(Object.keys(pools).map(async token_address => {
                 const tokenFetcher = this._zilliqa.contracts.at(token_address);
                 const init = await tokenFetcher.getInit();
+                const state = await tokenFetcher.getSubState("balances", forAddress.toLowerCase());
+                const balance = state ? state["balances"][forAddress.toLowerCase()] : "0";
                 return init.reduce((acc, param) => ({
                     ...acc,
                     [param.vname]: param.value
-                }), {});
+                }), {balance});
             }));
         }
         return [];
