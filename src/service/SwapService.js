@@ -540,7 +540,7 @@ module.exports = class SwapService {
                 return init.reduce((acc, param) => ({
                     ...acc,
                     [param.vname]: param.value
-                }), {balance});
+                }), {balance, address: token_address});
             }));
         }
         return [];
