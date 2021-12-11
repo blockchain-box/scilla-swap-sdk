@@ -1,10 +1,11 @@
 module.exports = class SwapValue {
-    constructor({tag, params, fees, priceImpact, swapRewards}) {
+    constructor({tag, params, fees, priceImpact, swapRewards, zilAmount}) {
         this._tag = tag;
         this._params = params;
         this._fees = fees;
         this._priceImpact = priceImpact;
         this._swapRewards = swapRewards;
+        this._zilAmount = zilAmount;
     }
 
 
@@ -26,5 +27,9 @@ module.exports = class SwapValue {
 
     get swapRewards() {
         return this._swapRewards;
+    }
+
+    get zilAmount() {
+        return this._zilAmount;
     }
 }
