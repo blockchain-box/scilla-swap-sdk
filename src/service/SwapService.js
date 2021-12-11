@@ -537,7 +537,7 @@ module.exports = class SwapService {
                     const {balance} = await this._zilliqa.blockchain.getBalance(forAddress.toLowerCase());
                     return {
                         decimals: 12,
-                        balance: balanc ? balance : "0",
+                        balance: balance ? balance : "0",
                         symbol: "zil",
                         name: "zilliqa",
                         address: zil_address
