@@ -538,6 +538,15 @@ module.exports = class SwapService {
         });
     }
 
+    async isTokenUnLocked({tokenAddress, account, amount}) {
+        const fetcher = this._zilliqa.contracts.at(tokenAddress);
+        const state = await fetcher.getSubState("allowances", [account.toLowerCase()]);
+        if (state && state["allowances"][account.toLowerCase()][this._address.toLowerCase()]) {
+            return BigInt(state["allowances"][account.toLowerCase()][this._address.toLowerCase()]) >= BigInt(amount ? amount : 0);
+        }
+        return false;
+    }
+
     async getTokens(forAddress) {
         const SwapState = await this._fetcher.getSubState(fields.pools.pools);
         if (SwapState) {
@@ -552,6 +561,9 @@ module.exports = class SwapService {
                         name: "zilliqa",
                         address: zil_address,
                         logo: "https://meta.viewblock.io/ZIL/logo",
+                        carbAmount: pools[token_address].arguments[0],
+                        tokenAmount: pools[token_address].arguments[1],
+                        priceCarb: tokenToNumber(pools[token_address].arguments[0], 8) / tokenToNumber(pools[token_address].arguments[1], 12),
                     };
                 }
                 const tokenFetcher = this._zilliqa.contracts.at(token_address);
@@ -565,6 +577,9 @@ module.exports = class SwapService {
                 const bech32 = toBech32Address(mapTestToMainAddresses[token_address] ? mapTestToMainAddresses[token_address] : token_address);
                 const symbol = "zilliqa";
                 token.logo = `https://meta.viewblock.io/${symbol}.${bech32}/logo`;
+                token.carbAmount = pools[token_address].arguments[0];
+                token.tokenAmount = pools[token_address].arguments[1];
+                token.priceCarb = tokenToNumber(pools[token_address].arguments[0], 8) / tokenToNumber(pools[token_address].arguments[1], token.decimals);
                 return token;
             }));
             const tokenFetcher = this._zilliqa.contracts.at(this._carbAddress);
@@ -578,7 +593,10 @@ module.exports = class SwapService {
                 balance,
                 symbol: "CARB",
                 name: "CARBON",
-                logo: `https://meta.viewblock.io/${symbol}.${bech32}/logo`
+                logo: `https://meta.viewblock.io/${symbol}.${bech32}/logo`,
+                carbAmount: 1,
+                tokenAmount: 1,
+                priceCarb: 1,
             });
             return tokens;
         }
