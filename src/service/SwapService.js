@@ -582,7 +582,7 @@ module.exports = class SwapService {
                 const tokenFetcher = this._zilliqa.contracts.at(token_address);
                 const init = await tokenFetcher.getInit();
                 const state = await tokenFetcher.getSubState("balances", [forAddress.toLowerCase()]);
-                console.log(balance);
+                const balance = state ? state["balances"][forAddress.toLowerCase()] : "0";
                 const token = init.reduce((acc, param) => ({
                     ...acc,
                     [param.vname]: param.value,
