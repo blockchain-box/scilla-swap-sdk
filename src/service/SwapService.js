@@ -581,8 +581,8 @@ module.exports = class SwapService {
                 }
                 const tokenFetcher = this._zilliqa.contracts.at(token_address);
                 const init = await tokenFetcher.getInit();
-                const state = await tokenFetcher.getSubState("balances", forAddress.toLowerCase());
-                const balance = state ? state["balances"][forAddress.toLowerCase()] : "0";
+                const state = await tokenFetcher.getSubState("balances", [forAddress.toLowerCase()]);
+                console.log(balance);
                 const token = init.reduce((acc, param) => ({
                     ...acc,
                     [param.vname]: param.value,
@@ -599,7 +599,7 @@ module.exports = class SwapService {
                 return token;
             }));
             const tokenFetcher = this._zilliqa.contracts.at(this._carbAddress);
-            const state = await tokenFetcher.getSubState("balances", forAddress.toLowerCase());
+            const state = await tokenFetcher.getSubState("balances", [forAddress.toLowerCase()]);
             const balance = state ? state["balances"][forAddress.toLowerCase()] : "0";
             const bech32 = toBech32Address(mapTestToMainAddresses[this._carbAddress] ? mapTestToMainAddresses[this._carbAddress] : token_address);
             const symbol = "zilliqa";
