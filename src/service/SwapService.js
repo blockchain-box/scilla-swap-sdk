@@ -245,6 +245,8 @@ const mapTestToMainAddresses = {
 
 const {toBech32Address} = require("@zilliqa-js/crypto");
 
+const BigNumber = require("bignumber.js");
+
 module.exports = class SwapService {
     constructor({contractAddress, host, nodeAPI, carbAddress, graphAddress}) {
         this._address = contractAddress;
@@ -557,6 +559,40 @@ module.exports = class SwapService {
             };
         }
         return {};
+    }
+
+    async calculateOutput({fromToken, toToken, amount, isTransfer}) {
+        const result = {
+            priceImpact: 0, // TODO
+            swapFees: 0,
+            txFees: (isTransfer ? 6.5 : 11) * 10 ** 12,
+            graphRewards: 0
+        };
+        if (!amount && amount <= 0) {
+            return result;
+        }
+
+        const fromCarbAmount = new BigNumber(fromToken.carbAmount);
+        const fromTokenAmount = new BigNumber(fromToken.tokenAmount);
+
+        const toCarbAmount = new BigNumber(toToken.carbAmount);
+        const toTokenAmount = new BigNumber(toToken.tokenAmount);
+
+        result.swapFees = this.getSwapFees({fromAddress: fromToken.address, fromAmount: amount});
+
+        const SwapState = await this._fetcher.getSubState(fields.pools.pools);
+
+        const graphPool = SwapState[fields.pools.pools][this._graphAddress];
+
+        const graphCarbAmount = new BigNumber(graphPool.arguments[0]).plus(new BigNumber(result.swapFees).multipliedBy(new BigNumber(10).pow(8)));
+        const graphAmount = new BigNumber(graphPool.arguments[1]);
+
+        const rate = graphAmount.div(graphCarbAmount);
+
+        result.graphRewards = rate.multipliedBy(new BigNumber(result.swapFees)).div(new BigNumber(10).pow(8)).toFixed(5);
+
+        return result;
+
     }
 
     async getTokens(forAddress) {
