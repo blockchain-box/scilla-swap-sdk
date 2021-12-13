@@ -300,6 +300,9 @@ module.exports = class SwapService {
     }
 
     async getDecimalsOfToken(token_address) {
+        if (token_address === zil_address) {
+            return "12";
+        }
         const fetcher = this._zilliqa.contracts.at(token_address);
         const init = await fetcher.getInit();
         return init.find(({vname}) => vname === "decimals").value;
@@ -565,7 +568,7 @@ module.exports = class SwapService {
         const result = {
             priceImpact: 0, // TODO
             swapFees: 0,
-            txFees: isTransfer ? 6.5 : 11,
+            txFees: isTransfer ? 11 : 6.5,
             graphRewards: 0
         };
         if (!amount && amount <= 0) {
@@ -589,7 +592,7 @@ module.exports = class SwapService {
 
         const rate = graphAmount.div(graphCarbAmount);
 
-        result.graphRewards = rate.multipliedBy(new BigNumber(result.swapFees)).div(new BigNumber(10).pow(8)).toFixed(5);
+        result.graphRewards = rate.multipliedBy(new BigNumber(result.swapFees)).toFixed(5);
 
         return result;
 
