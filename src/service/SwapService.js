@@ -565,7 +565,7 @@ module.exports = class SwapService {
         const result = {
             priceImpact: 0, // TODO
             swapFees: 0,
-            txFees: (isTransfer ? 6.5 : 11) * 10 ** 12,
+            txFees: isTransfer ? 6.5 : 11,
             graphRewards: 0
         };
         if (!amount && amount <= 0) {
