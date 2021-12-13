@@ -99,6 +99,7 @@ const events = {
 
 const {Zilliqa} = require("@zilliqa-js/zilliqa");
 const tokenToNumber = require("../utils/tokenToNumber");
+const axios = require("axios");
 
 const transitions = {
     WithdrawCarb() {
@@ -547,6 +548,17 @@ module.exports = class SwapService {
         return false;
     }
 
+    async getPriceOfTokenUSD(symbol) {
+        const data = (await axios.get("https://api.zilstream.com/tokens/" + symbol)).data;
+        if (data) {
+            return {
+                price: symbol.toLowerCase() === "zil" ? data.rate : data.rate_usd,
+                priceZIL: data.rate,
+            };
+        }
+        return {};
+    }
+
     async getTokens(forAddress) {
         const SwapState = await this._fetcher.getSubState(fields.pools.pools);
         if (SwapState) {
@@ -564,6 +576,7 @@ module.exports = class SwapService {
                         carbAmount: pools[token_address].arguments[0],
                         tokenAmount: pools[token_address].arguments[1],
                         priceCarb: tokenToNumber(pools[token_address].arguments[0], 8) / tokenToNumber(pools[token_address].arguments[1], 12),
+                        ...(await this.getPriceOfTokenUSD("zil"))
                     };
                 }
                 const tokenFetcher = this._zilliqa.contracts.at(token_address);
@@ -580,6 +593,9 @@ module.exports = class SwapService {
                 token.carbAmount = pools[token_address].arguments[0];
                 token.tokenAmount = pools[token_address].arguments[1];
                 token.priceCarb = tokenToNumber(pools[token_address].arguments[0], 8) / tokenToNumber(pools[token_address].arguments[1], token.decimals);
+                const tokenPrices = await (await this.getPriceOfTokenUSD(token.symbol));
+                token.price = tokenPrices.price;
+                token.priceZIL = tokenPrices.priceZIL;
                 return token;
             }));
             const tokenFetcher = this._zilliqa.contracts.at(this._carbAddress);
@@ -587,6 +603,7 @@ module.exports = class SwapService {
             const balance = state ? state["balances"][forAddress.toLowerCase()] : "0";
             const bech32 = toBech32Address(mapTestToMainAddresses[this._carbAddress] ? mapTestToMainAddresses[this._carbAddress] : token_address);
             const symbol = "zilliqa";
+            const carbPrices = await (await this.getPriceOfTokenUSD("carb"));
             tokens.push({
                 address: this._carbAddress,
                 decimals: 8,
@@ -597,6 +614,8 @@ module.exports = class SwapService {
                 carbAmount: 1,
                 tokenAmount: 1,
                 priceCarb: 1,
+                price: carbPrices.price,
+                priceZIL: carbPrices.priceZIL,
             });
             return tokens;
         }
