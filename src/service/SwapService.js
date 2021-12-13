@@ -578,7 +578,7 @@ module.exports = class SwapService {
         const toCarbAmount = new BigNumber(toToken.carbAmount);
         const toTokenAmount = new BigNumber(toToken.tokenAmount);
 
-        result.swapFees = this.getSwapFees({fromAddress: fromToken.address, fromAmount: amount});
+        result.swapFees = await this.getSwapFees({fromAddress: fromToken.address, fromAmount: amount});
 
         const SwapState = await this._fetcher.getSubState(fields.pools.pools);
 
