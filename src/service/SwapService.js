@@ -593,7 +593,7 @@ module.exports = class SwapService {
                 token.carbAmount = pools[token_address].arguments[0];
                 token.tokenAmount = pools[token_address].arguments[1];
                 token.priceCarb = tokenToNumber(pools[token_address].arguments[0], 8) / tokenToNumber(pools[token_address].arguments[1], token.decimals);
-                const tokenPrices = await (await this.getPriceOfTokenUSD(token.symbol));
+                const tokenPrices = await (await this.getPriceOfTokenUSD(token.symbol.toLowerCase() === "graph" ? "carb" : token.symbol));
                 token.price = tokenPrices.price;
                 token.priceZIL = tokenPrices.priceZIL;
                 return token;
