@@ -8,6 +8,7 @@ const IsTokenUnLockedDTO = require("./src/dto/IsTokenUnLockedDTO");
 const GetPoolsOfAccountDTO = require("./src/dto/GetPoolsOfAccountDTO");
 const GetTokenOfAccountInSwapDTO = require("./src/dto/GetTokenOfAccountInSwapDTO");
 const CalculateSwapResultDTO = require("./src/dto/CalculateSwapResultDTO");
+const SwapPriceService = require("./src/service/SwapPriceService");
 
 module.exports = class SwapDSK {
     constructor({nodeAPI, swapContract, carbContract, graphContract}) {
@@ -22,6 +23,12 @@ module.exports = class SwapDSK {
             carbAddress: carbContract,
             tokenRepository: this._tokenRepo,
             balanceRepository: this._balanceRepo,
+            swapPriceService: new SwapPriceService({
+                swapAddress: swapContract,
+                carbAddress: carbContract,
+                tokenRepository: this._tokenRepo,
+                poolRepository: this._poolRepo,
+            }),
         });
         this._poolService = new PoolService({
             contractAddress: swapContract,

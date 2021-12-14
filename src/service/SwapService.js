@@ -131,6 +131,7 @@ const TokenAccountValue = require("../value/TokenAccountValue");
 const mapTokenToLogo = require("../share/mapTokenToLogo");
 const BalanceRepository = require("../repository/BalanceRepository");
 const SwapResultValue = require("../value/SwapResultValue");
+const SwapPriceService = require("./SwapPriceService");
 
 module.exports = class SwapService {
     constructor({
@@ -140,7 +141,8 @@ module.exports = class SwapService {
                     carbAddress,
                     graphAddress,
                     tokenRepository = new TokenRepository({}),
-                    balanceRepository = new BalanceRepository({})
+                    balanceRepository = new BalanceRepository({}),
+                    swapPriceService = new SwapPriceService({})
                 }) {
         this._address = contractAddress;
         this._host = host;
@@ -152,6 +154,7 @@ module.exports = class SwapService {
         this._min = 0.01;
         this._tokenRepository = tokenRepository;
         this._balanceRepository = balanceRepository;
+        this._swapPriceService = swapPriceService;
     }
 
     setDeadlineBlock(blocks) {
@@ -248,7 +251,7 @@ module.exports = class SwapService {
         if (fromAmount.toLowerCase() === toAddress.toLowerCase()) {
             return fromAmount;
         }
-        const price = await this.priceOfTokenInOtherToken(fromAddress, toAddress);
+        const price = await this._swapPriceService.priceOfTokenInOtherToken(fromAddress, toAddress);
         return price * fromAmount;
     }
 
@@ -266,13 +269,13 @@ module.exports = class SwapService {
         if (fromAddress.toLowerCase() == this._carbAddress.toLowerCase()) {
             return fromAmount * fees;
         }
-        const price = await this.priceOfTokenInOtherToken(fromAddress, this._carbAddress);
+        const price = await this._swapPriceService.priceOfTokenInOtherToken(fromAddress, this._carbAddress);
         return (price * fromAmount) * fees;
     }
 
     async getSwapRewards({fromAddress, fromAmount}) {
         const fees = await this.getSwapFees({fromAddress, fromAmount});
-        const price = await this.priceOfTokenInOtherToken(this._carbAddress, this._graphAddress);
+        const price = await this._swapPriceService.priceOfTokenInOtherToken(this._carbAddress, this._graphAddress);
         return fees * price;
     }
 
