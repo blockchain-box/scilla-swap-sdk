@@ -31,19 +31,19 @@ module.exports = class SwapPriceService {
         const fromToken = await this._tokenRepository.findToken(fromAddress);
 
         if (fromAddress.toLowerCase() === toAddress.toLowerCase()) {
-            return (1).toFixed(fromToken.decimals);
+            return parseFloat((1).toFixed(fromToken.decimals));
         }
 
         if (fromAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
             const tokenPrice = await this.priceOfTokenInCarb(toAddress);
-            return (1 / parseFloat(tokenPrice)).toFixed(fromToken.decimals);
+            return parseFloat((1 / parseFloat(tokenPrice)).toFixed(fromToken.decimals));
         } else if (toAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
             const price = await this.priceOfTokenInCarb(fromAddress);
-            return parseFloat(price).toFixed(fromToken.decimals);
+            return parseFloat(parseFloat(price).toFixed(fromToken.decimals));
         } else {
             const rate_token1 = await this.priceOfTokenInCarb(fromAddress);
             const rate_token2 = await this.priceOfTokenInCarb(toAddress);
-            return (parseFloat(rate_token1) / parseFloat(rate_token2)).toFixed(fromToken.decimals);
+            return parseFloat((parseFloat(rate_token1) / parseFloat(rate_token2)).toFixed(fromToken.decimals));
         }
     }
 }

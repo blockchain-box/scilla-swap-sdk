@@ -390,7 +390,7 @@ module.exports = class SwapService {
 
         const rate = graphAmount.div(graphCarbAmount);
 
-        const graphRewards = rate.multipliedBy(new BigNumber(swapFees)).toFixed(5);
+        const graphRewards = rate.multipliedBy(new BigNumber(swapFees)).toNumber().toFixed(5);
 
         return new SwapResultValue({
             priceImpact: 0, // TODO
