@@ -17,7 +17,8 @@ module.exports = class PoolService {
                     nodeAPI,
                     poolRepository = new PoolRepository({}),
                     tokenRepository = new TokenRepository({}),
-                    balanceRepository = new BalanceRepository({})
+                    balanceRepository = new BalanceRepository({}),
+                    carbAddress,
                 }) {
         this._address = contractAddress;
         this._host = host;
@@ -27,6 +28,7 @@ module.exports = class PoolService {
         this._poolRepository = poolRepository;
         this._tokenRepository = tokenRepository;
         this._balanceRepository = balanceRepository;
+        this._carbAddress = carbAddress;
     }
 
     async getSwapPools() {
@@ -43,7 +45,11 @@ module.exports = class PoolService {
                     priceZIL: await this._tokenRepository.getPriceOfTokenInZil(token.symbol),
                     logo: mapTokenToLogo(token),
                     priceUSD: await this._tokenRepository.getPriceOfTokenUSD(token.symbol),
-                    decimals: token.decimals
+                    decimals: token.decimals,
+                    priceCarb: this._tokenRepository.priceOfTokenInCarbWithPool(token, {
+                        carbAmount: pools[token.address].arguments[0],
+                        tokenAmount: pools[token.address].arguments[1]
+                    }, this._carbAddress)
                 }),
                 tokenAmount: pools[token.address].arguments[1],
                 carbAmount: pools[token.address].arguments[0],
@@ -73,6 +79,7 @@ module.exports = class PoolService {
                         symbol: pool.token.symbol,
                         name: pool.token.name,
                         decimals: pool.token.decimals,
+                        priceCarb: this._tokenRepository.priceOfTokenInCarbWithPool(pool.token, pool, this._carbAddress)
                     }),
                     lpBalance: await this._poolRepository.getLPBalance({
                         tokenAddresses: pool.token.address,

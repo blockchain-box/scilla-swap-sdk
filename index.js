@@ -30,6 +30,7 @@ module.exports = class SwapDSK {
             balanceRepository: this._balanceRepo,
             poolRepository: this._poolRepo,
             tokenRepository: this._tokenRepo,
+            carbAddress: carbContract,
         });
     }
 

@@ -4,14 +4,31 @@ const Token = require("../model/Token");
 const axios = require("axios");
 
 const mapTestSymbols = require("../share/mapTestSymbols");
+const BigNumber = require("bignumber.js");
 
 module.exports = class TokenRepository {
     constructor({nodeAPI}) {
         this._zilliqa = new Zilliqa(nodeAPI);
     }
 
+    getUrlOfTokenPrice(token) {
+        return ("https://api.zilstream.com/tokens/") + (mapTestSymbols[token.symbol.toLowerCase()] ? mapTestSymbols[token.symbol.toLowerCase()] : token.symbol)
+    }
+
+    priceOfTokenInCarbWithPool(token, pool, carbAddress) {
+        if (carbAddress === token.address) {
+            throw new Error("not allowed to find price of carb in carb");
+        }
+        const tokenDenom = new BigNumber(10).pow(token.decimals);
+        const carbDenom = new BigNumber(10).pow(8);
+        const carbAmount = new BigNumber(pool.carbAmount).div(carbDenom);
+        const tokenAmount = new BigNumber(pool.tokenAmount).div(tokenDenom);
+        return carbAmount.div(tokenAmount).toFixed(8);
+    }
+
     async getPriceOfTokenUSD(symbol) {
-        const data = (await axios.get("https://api.zilstream.com/tokens/" + mapTestSymbols[symbol.toLowerCase()] ? mapTestSymbols[symbol.toLowerCase()] : symbol)).data;
+        const url = this.getUrlOfTokenPrice({symbol});
+        const data = (await axios.get(url)).data;
         if (data) {
             return symbol.toLowerCase() === "zil" ? data.rate : data.rate_usd;
         }
@@ -19,7 +36,8 @@ module.exports = class TokenRepository {
     }
 
     async getPriceOfTokenInZil(symbol) {
-        const data = (await axios.get("https://api.zilstream.com/tokens/" + mapTestSymbols[symbol.toLowerCase()] ? mapTestSymbols[symbol.toLowerCase()] : symbol)).data;
+        const url = this.getUrlOfTokenPrice({symbol});
+        const data = (await axios.get(url)).data;
         if (data) {
             return data.rate;
         }

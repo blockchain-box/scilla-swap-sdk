@@ -24,11 +24,7 @@ module.exports = class SwapPriceService {
         if (!pool) {
             throw new Error("no pool found for address: " + tokenAddress);
         }
-        const tokenDenom = new BigNumber(10).pow(token.decimals);
-        const carbDenom = new BigNumber(10).pow(8);
-        const carbAmount = new BigNumber(pool.carbAmount).div(carbDenom);
-        const tokenAmount = new BigNumber(pool.tokenAmount).div(tokenDenom);
-        return carbAmount.div(tokenAmount).toFixed(8);
+        return this._tokenRepository.priceOfTokenInCarbWithPool(token, pool, this._carbAddress);
     }
 
     async priceOfTokenInOtherToken(fromAddress, toAddress) {
