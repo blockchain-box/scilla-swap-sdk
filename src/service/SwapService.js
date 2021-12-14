@@ -266,11 +266,11 @@ module.exports = class SwapService {
     async getSwapFees({fromAddress, fromAmount}) {
         const state = await this._fetcher.getState();
         const fees = parseInt(state[fields.output_after_fee.output_after_fee]) / 1000000;
-        if (fromAddress.toLowerCase() == this._carbAddress.toLowerCase()) {
-            return fromAmount * fees;
+        if (fromAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
+            return parseFloat(fromAmount) * fees;
         }
-        const price = await this._swapPriceService.priceOfTokenInOtherToken(fromAddress, this._carbAddress);
-        return (price * fromAmount) * fees;
+        const price = await this._swapPriceService.priceOfTokenInOtherToken(this._carbAddress, fromAddress);
+        return parseFloat((price * parseFloat(fromAmount) * fees).toFixed(5));
     }
 
     async getSwapRewards({fromAddress, fromAmount}) {
