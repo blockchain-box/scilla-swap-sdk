@@ -150,7 +150,7 @@ module.exports = class SwapService {
         this._graphAddress = graphAddress;
         this._deadline_block = 10;
         this._min = 0.01;
-        this._tokenRepsitory = tokenRepository;
+        this._tokenRepository = tokenRepository;
         this._balanceRepository = balanceRepository;
     }
 
@@ -288,8 +288,8 @@ module.exports = class SwapService {
         if (fromAddress.toLowerCase() === toAddress.toLowerCase()) {
             throw new Error("no allowed to swap for same token");
         }
-        const fromToken = await this._tokenRepsitory.findToken(fromAddress);
-        const toToken = await this._tokenRepsitory.findToken(toAddress);
+        const fromToken = await this._tokenRepository.findToken(fromAddress);
+        const toToken = await this._tokenRepository.findToken(toAddress);
         if (fromAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
             const decimals = toToken.decimals;
             const carbAmount = parseFloat(fromAmount) * 10 ** 8;
@@ -402,27 +402,32 @@ module.exports = class SwapService {
         const SwapState = await this._fetcher.getSubState(fields.pools.pools);
         if (SwapState) {
             const pools = SwapState[fields.pools.pools];
-            const tokens = await Promise.all(Object.keys(pools).map(async tokenAddress => await this._tokenRepsitory.findToken(tokenAddress)));
+            const tokens = await Promise.all(Object.keys(pools).map(async tokenAddress => await this._tokenRepository.findToken(tokenAddress)));
             const tokenValues = await Promise.all(tokens.map(async token => new TokenAccountValue({
                 address: token.address,
                 logo: mapTokenToLogo(token),
-                priceUSD: await this._tokenRepsitory.getPriceOfTokenUSD(token.symbol),
-                priceZIL: await this._tokenRepsitory.getPriceOfTokenInZil(token.symbol),
+                priceUSD: await this._tokenRepository.getPriceOfTokenUSD(token.symbol),
+                priceZIL: await this._tokenRepository.getPriceOfTokenInZil(token.symbol),
                 symbol: token.symbol,
                 name: token.name,
                 balance: await this._balanceRepository.getBalanceOfToken(forAddress, token.address),
                 decimals: token.decimals,
+                priceCarb: this._tokenRepository.priceOfTokenInCarbWithPool(token, {
+                    carbAmount: pools[token.address].arguments[0],
+                    tokenAmount: pools[token.address].arguments[1]
+                }, this._carbAddress)
             })));
-            const carbToken = await this._tokenRepsitory.findToken(this._carbAddress);
+            const carbToken = await this._tokenRepository.findToken(this._carbAddress);
             tokenValues.push(new TokenAccountValue({
                 address: carbToken.address,
                 symbol: carbToken.symbol,
                 name: carbToken.name,
                 balance: await this._balanceRepository.getBalanceOfToken(forAddress, carbToken.address),
-                priceZIL: await this._tokenRepsitory.getPriceOfTokenInZil(carbToken.symbol),
+                priceZIL: await this._tokenRepository.getPriceOfTokenInZil(carbToken.symbol),
                 logo: mapTokenToLogo(carbToken),
-                priceUSD: await this._tokenRepsitory.getPriceOfTokenUSD(carbToken.symbol),
+                priceUSD: await this._tokenRepository.getPriceOfTokenUSD(carbToken.symbol),
                 decimals: carbToken.decimals,
+                priceCarb: 1,
             }));
             return tokenValues;
         }
