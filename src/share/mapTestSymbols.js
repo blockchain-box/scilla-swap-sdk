@@ -1,3 +1,3 @@
 module.exports = {
-    "graph": "carb", // graph => carb
+    "graph": "CARB", // graph => carb
 };
