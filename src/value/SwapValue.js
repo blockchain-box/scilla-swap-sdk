@@ -1,13 +1,11 @@
+const SwapResultValue = require("./SwapResultValue");
+
 module.exports = class SwapValue {
-    constructor({tag, params, fees, priceImpact, swapRewards, zilAmount}) {
+    constructor({tag, params, swapResult = new SwapResultValue({})}) {
         this._tag = tag;
         this._params = params;
-        this._fees = fees;
-        this._priceImpact = priceImpact;
-        this._swapRewards = swapRewards;
-        this._zilAmount = zilAmount;
+        this._swapResult = swapResult;
     }
-
 
     get tag() {
         return this._tag;
@@ -17,19 +15,7 @@ module.exports = class SwapValue {
         return this._params;
     }
 
-    get fees() {
-        return this._fees;
-    }
-
-    get priceImpact() {
-        return this._priceImpact;
-    }
-
-    get swapRewards() {
-        return this._swapRewards;
-    }
-
-    get zilAmount() {
-        return this._zilAmount;
+    get swapResult() {
+        return this._swapResult;
     }
 }

@@ -1,105 +1,10 @@
-const fields = {
-    "pools": {
-        "pools": "pools",
-        "Map (ByStr20) (1cad1acc-fe52-4c91-84b1-d10a6394cd72.Pool)": "Map (ByStr20) (1cad1acc-fe52-4c91-84b1-d10a6394cd72.Pool)"
-    },
-    "balances": {
-        "balances": "balances",
-        "Map (ByStr20) (Map (ByStr20) (Uint128))": "Map (ByStr20) (Map (ByStr20) (Uint128))"
-    },
-    "total_contributions": {
-        "total_contributions": "total_contributions",
-        "Map (ByStr20) (Uint128)": "Map (ByStr20) (Uint128)"
-    },
-    "output_after_fee": {"output_after_fee": "output_after_fee", "Uint256": "Uint256"},
-    "owner": {"owner": "owner", "ByStr20": "ByStr20"},
-    "pending_owner": {"pending_owner": "pending_owner", "ByStr20": "ByStr20"},
-    "carb_balances": {"carb_balances": "carb_balances", "Map (ByStr20) (Uint128)": "Map (ByStr20) (Uint128)"},
-    "graph_balances": {"graph_balances": "graph_balances", "Map (ByStr20) (Uint128)": "Map (ByStr20) (Uint128)"},
-    "carb_min": {"carb_min": "carb_min", "Uint128": "Uint128"},
-    "carb_max": {"carb_max": "carb_max", "Uint128": "Uint128"},
-    "min_liquidity": {"min_liquidity": "min_liquidity", "Uint128": "Uint128"},
-    "whitelisted_token": {"whitelisted_token": "whitelisted_token", "Map (ByStr20) (Bool)": "Map (ByStr20) (Bool)"},
-    "is_graph_mint_not_close": {"is_graph_mint_not_close": "is_graph_mint_not_close", "Bool": "Bool"},
-    "zil_address": {"zil_address": "zil_address", "ByStr20": "ByStr20"},
-    "change_params_user": {"change_params_user": "change_params_user", "ByStr20": "ByStr20"}
-};
-const events = {
-    "Burnt": {
-        "name": "Burnt",
-        "params": [
-            {"name": "pool", "type": "ByStr20"},
-            {"name": "address", "type": "ByStr20"},
-            {"name": "amount", "type": "Uint128"},
-            {"name": "carb_amount", "type": "Uint128"}
-        ]
-    },
-    "OwnershipTransferred": {
-        "name": "OwnershipTransferred",
-        "params": [{"name": "owner", "type": "ByStr20"}]
-    },
-    "UnstakeCarb": {
-        "name": "UnstakeCarb",
-        "params": [
-            {"name": "amount", "type": "Uint128"},
-            {"name": "account", "type": "ByStr20"}
-        ]
-    },
-    "FeeSet": {
-        "name": "FeeSet",
-        "params": [{"name": "fee", "type": "Uint256"}]
-    },
-    "stakeCarb": {
-        "name": "stakeCarb",
-        "params": [
-            {"name": "amount", "type": "Uint128"},
-            {"name": "account", "type": "ByStr20"}
-        ]
-    },
-    "SetTokenToWhitelist": {
-        "name": "SetTokenToWhitelist",
-        "params": [{"name": "token", "type": "ByStr20"}]
-    },
-    "Mint": {
-        "name": "Mint",
-        "params": [
-            {"name": "pool", "type": "ByStr20"},
-            {"name": "address", "type": "ByStr20"},
-            {"name": "amount", "type": "Uint128"},
-            {"name": "carb_amount", "type": "Uint128"}
-        ]
-    },
-    "PoolCreated": {
-        "name": "PoolCreated",
-        "params": [{"name": "pool", "type": "ByStr20"}]
-    },
-    "Swap": {
-        "name": "Swap",
-        "params": [{"name": "calculated_amount", "type": "Uint128"}]
-    },
-    "SwapFeeAndRewards": {
-        "name": "SwapFeeAndRewards",
-        "params": [
-            {"name": "carb_fees", "type": "Uint128"},
-            {"name": "graph_rewards", "type": "Uint128"}
-        ]
-    },
-    "Swapped": {
-        "name": "Swapped",
-        "params": [
-            {"name": "pool", "type": "ByStr20"},
-            {"name": "address", "type": "ByStr20"},
-            {"name": "input", "type": "1cad1acc-fe52-4c91-84b1-d10a6394cd72.Coins"},
-            {"name": "output", "type": "1cad1acc-fe52-4c91-84b1-d10a6394cd72.Coins"},
-            {"name": "avatar", "type": "String"}
-        ]
-    }
-};
-
+const fields = require("../share/swapFields");
 
 const {Zilliqa} = require("@zilliqa-js/zilliqa");
 const tokenToNumber = require("../utils/tokenToNumber");
 const axios = require("axios");
+
+const {Uint128, Bool, ByStr20, BNum, String} = require("../share/scillaTypes");
 
 const transitions = {
     WithdrawCarb() {
@@ -110,20 +15,20 @@ const transitions = {
     },
     AddLiquidity({carb_amount, token_address, min_contribution_amount, max_token_amount, deadline_block}) {
         return [
-            {"vname": "carb_amount", "type": "Uint128", value: carb_amount.toString()},
-            {"vname": "token_address", "type": "ByStr20", value: token_address.toString()},
-            {"vname": "min_contribution_amount", "type": "Uint128", value: min_contribution_amount.toString()},
-            {"vname": "max_token_amount", "type": "Uint128", value: max_token_amount.toString()},
-            {"vname": "deadline_block", "type": "BNum", value: deadline_block.toString()}
+            Uint128("carb_amount", carb_amount),
+            ByStr20("token_address", token_address),
+            Uint128("min_contribution_amount", min_contribution_amount),
+            Uint128("max_token_amount", max_token_amount),
+            BNum("deadline_block", deadline_block)
         ];
     },
     RemoveLiquidity({token_address, contribution_amount, min_carb_amount, min_token_amount, deadline_block}) {
         return [
-            {"vname": "token_address", "type": "ByStr20", value: token_address.toString()},
-            {"vname": "contribution_amount", "type": "Uint128", value: contribution_amount.toString()},
-            {"vname": "min_carb_amount", "type": "Uint128", value: min_carb_amount.toString()},
-            {"vname": "min_token_amount", "type": "Uint128", value: min_token_amount.toString()},
-            {"vname": "deadline_block", "type": "BNum", value: deadline_block.toString()}
+            ByStr20("token_address", token_address),
+            Uint128("contribution_amount", contribution_amount),
+            Uint128("min_carb_amount", min_carb_amount),
+            Uint128("min_token_amount", min_token_amount),
+            BNum("deadline_block", deadline_block),
         ];
     },
     SwapExactCarbForTokens({
@@ -136,17 +41,13 @@ const transitions = {
                                avatar
                            }) {
         return [
-            {"vname": "amount", "type": "Uint128", value: amount.toString()},
-            {"vname": "token_address", "type": "ByStr20", value: token_address.toString()},
-            {"vname": "min_token_amount", "type": "Uint128", value: min_token_amount.toString()},
-            {"vname": "deadline_block", "type": "BNum", value: deadline_block.toString()},
-            {"vname": "recipient_address", "type": "ByStr20", value: recipient_address.toString()},
-            {
-                "vname": "is_transfer",
-                "type": "Bool",
-                value: {constructor: is_transfer ? "True" : "False", argtypes: [], arguments: []}
-            },
-            {"vname": "avatar", "type": "String", value: avatar.toString()}
+            Uint128("amount", amount),
+            ByStr20("token_address", token_address),
+            Uint128("min_token_amount", min_token_amount),
+            BNum("deadline_block", deadline_block),
+            ByStr20("recipient_address", recipient_address),
+            Bool("is_transfer", is_transfer),
+            String("avatar", avatar)
         ];
     },
     SwapExactTokensForCarb({
@@ -159,17 +60,13 @@ const transitions = {
                                avatar
                            }) {
         return [
-            {"vname": "token_address", "type": "ByStr20", value: token_address.toString()},
-            {"vname": "token_amount", "type": "Uint128", value: token_amount.toString()},
-            {"vname": "min_carb_amount", "type": "Uint128", value: min_carb_amount.toString()},
-            {"vname": "deadline_block", "type": "BNum", value: deadline_block.toString()},
-            {"vname": "recipient_address", "type": "ByStr20", value: recipient_address.toString()},
-            {
-                "vname": "is_transfer",
-                "type": "Bool",
-                value: {constructor: is_transfer ? "True" : "False", argtypes: [], arguments: []}
-            },
-            {"vname": "avatar", "type": "String", value: avatar}
+            ByStr20("token_address", token_address),
+            Uint128("token_amount", token_amount),
+            Uint128("min_carb_amount", min_carb_amount),
+            BNum("deadline_block", deadline_block),
+            ByStr20("recipient_address", recipient_address),
+            Bool("is_transfer", is_transfer),
+            String("avatar", avatar)
         ];
     },
     SwapExactTokensForTokens({
@@ -183,18 +80,14 @@ const transitions = {
                                  avatar
                              }) {
         return [
-            {"vname": "token0_address", "type": "ByStr20", value: token0_address.toString()},
-            {"vname": "token1_address", "type": "ByStr20", value: token1_address.toString()},
-            {"vname": "token0_amount", "type": "Uint128", value: token0_amount.toString()},
-            {"vname": "min_token1_amount", "type": "Uint128", value: min_token1_amount.toString()},
-            {"vname": "deadline_block", "type": "BNum", value: deadline_block.toString()},
-            {"vname": "recipient_address", "type": "ByStr20", value: recipient_address.toString()},
-            {
-                "vname": "is_transfer",
-                "type": "Bool",
-                value: {constructor: is_transfer ? "True" : "False", argtypes: [], arguments: []}
-            },
-            {"vname": "avatar", "type": "String", value: avatar.toString()}
+            ByStr20("token0_address", token0_address),
+            ByStr20("token1_address", token1_address),
+            Uint128("token0_amount", token0_amount),
+            Uint128("min_token1_amount", min_token1_amount),
+            BNum("deadline_block", deadline_block),
+            ByStr20("recipient_address", recipient_address),
+            Bool("is_transfer", is_transfer),
+            String("avatar", avatar)
         ];
     },
     SwapTokensForExactTokens({
@@ -208,18 +101,14 @@ const transitions = {
                                  avatar
                              }) {
         return [
-            {"vname": "token0_address", "type": "ByStr20", value: token0_address.toString()},
-            {"vname": "token1_address", "type": "ByStr20", value: token1_address.toString()},
-            {"vname": "max_token0_amount", "type": "Uint128", value: max_token0_amount.toString()},
-            {"vname": "token1_amount", "type": "Uint128", value: token1_amount.toString()},
-            {"vname": "deadline_block", "type": "BNum", value: deadline_block.toString()},
-            {"vname": "recipient_address", "type": "ByStr20", value: recipient_address.toString()},
-            {
-                "vname": "is_transfer",
-                "type": "Bool",
-                value: {constructor: is_transfer ? "True" : "False", argtypes: [], arguments: []}
-            },
-            {"vname": "avatar", "type": "String", value: avatar.toString()}
+            ByStr20("token0_address", token0_address),
+            ByStr20("token1_address", token1_address),
+            Uint128("max_token0_amount", max_token0_amount),
+            Uint128("token1_amount", token1_amount),
+            BNum("deadline_block", deadline_block),
+            ByStr20("recipient_address", recipient_address),
+            Bool("is_transfer", is_transfer),
+            String("avatar", avatar)
         ];
     },
 };
@@ -232,23 +121,27 @@ const SwapTokenForCarbDTO = require("../dto/SwapTokenForCarbDTO");
 
 const SwapValue = require("../value/SwapValue");
 
-const zil_address = "0x0000000000000000000000000000000000000000";
-
-const mapTestToMainAddresses = {
-    "0x42c15375aa554080488ab10c0c4e6fcf1edc9eb5": "0x3A683Fdc022b26D755c70E9ed7cFCc446658018b", // port
-    "0x94677f06ad3046bd7c793fcb179ca79c822e6dd5": "0x153FeaddC48871108e286de3304B9597c817B456", // xCAD
-    "0x984219c0d7a9ebd54b433792232b69c99e78b538": "0xa3eAFd5021F6B9c36fD02Ed58aa1d015F2238791", // stream
-    "0xc2e8a69f162d59935430eb936467f23ff4091f27": "0x34E77F91FBa80C6555fDf4A23FB132ABbaCE8AaF", // graph
-    "0xed9f4be52d589ca7ec778a2185a5fa705a1d6bcc": "0xa845C1034CD077bD8D32be0447239c7E4be6cb21", // gzil
-    "0xc5c5f8786574522e83242e5981482d63c9ac7101": "0xbF79E16872fAd92C16810ddD2A7B9B6858C7b756", //carb
-};
-
+const {tokens, zilAddress} = require("../share/mapTestAddresses");
+const zil_address = zilAddress;
+const mapTestToMainAddresses = tokens;
 const {toBech32Address} = require("@zilliqa-js/crypto");
-
 const BigNumber = require("bignumber.js");
+const TokenRepository = require("../repository/TokenRepository");
+const TokenAccountValue = require("../value/TokenAccountValue");
+const mapTokenToLogo = require("../share/mapTokenToLogo");
+const BalanceRepository = require("../repository/BalanceRepository");
+const SwapResultValue = require("../value/SwapResultValue");
 
 module.exports = class SwapService {
-    constructor({contractAddress, host, nodeAPI, carbAddress, graphAddress}) {
+    constructor({
+                    contractAddress,
+                    host,
+                    nodeAPI,
+                    carbAddress,
+                    graphAddress,
+                    tokenRepository = new TokenRepository({}),
+                    balanceRepository = new BalanceRepository({})
+                }) {
         this._address = contractAddress;
         this._host = host;
         this._zilliqa = new Zilliqa(nodeAPI);
@@ -257,6 +150,8 @@ module.exports = class SwapService {
         this._graphAddress = graphAddress;
         this._deadline_block = 10;
         this._min = 0.01;
+        this._tokenRepsitory = tokenRepository;
+        this._balanceRepository = balanceRepository;
     }
 
     setDeadlineBlock(blocks) {
@@ -267,88 +162,9 @@ module.exports = class SwapService {
         this._min = min;
     }
 
-    get deadlineBlock() {
-        return this._deadline_block;
-    }
-
-    get min() {
-        return this._min;
-    }
-
-    get carbAddress() {
-        return this._carbAddress;
-    }
-
-    get graphAddress() {
-        return this._graphAddress;
-    }
-
-    get swapAddress() {
-        return this._address;
-    }
-
-    async getState() {
-        return this._fetcher.getState();
-    }
-
-    async getBalanceOfLPer({tokenAddress, lpAddress}) {
-        const state = await this._fetcher.getSubState(fields.balances.balances, [tokenAddress.toLowerCase()]);
-        if (state) {
-            return tokenToNumber(state[fields.balances.balances][tokenAddress.toLowerCase()][lpAddress.toLowerCase()], "0");
-        }
-        return 0.00;
-    }
-
-    async getDecimalsOfToken(token_address) {
-        if (token_address === zil_address) {
-            return "12";
-        }
-        const fetcher = this._zilliqa.contracts.at(token_address);
-        const init = await fetcher.getInit();
-        return init.find(({vname}) => vname === "decimals").value;
-    }
-
-    async priceOfTokenInCarb(token_address) {
-        if (this._carbAddress.toLowerCase() === token_address.toLowerCase()) {
-            throw new Error("not allowed to find price of carb in carb");
-        }
-        const decimals = await this.getDecimalsOfToken(token_address);
-        const state = await this._fetcher.getState();
-        const token_pool = state[fields.pools.pools][token_address];
-        if (!token_pool) {
-            throw new Error("no pool found for address: " + token_address);
-        }
-        return tokenToNumber(token_pool.arguments[0], 8) / tokenToNumber(token_pool.arguments[1], decimals);
-    }
-
-    async priceOfTokenInOtherToken(fromAddress, toAddress) {
-        const decimals = await this.getDecimalsOfToken(fromAddress);
-
-        if (fromAddress.toLowerCase() === toAddress.toLowerCase()) {
-            return (1).toFixed(decimals);
-        }
-
-        if (fromAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
-            const tokenPrice = await this.priceOfTokenInCarb(toAddress);
-            return (1 / tokenPrice).toFixed(decimals);
-        } else if (toAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
-            const price = await this.priceOfTokenInCarb(fromAddress);
-            return parseFloat(price).toFixed(decimals);
-        } else {
-            const rate_token1 = await this.priceOfTokenInCarb(fromAddress);
-            const rate_token2 = await this.priceOfTokenInCarb(toAddress);
-            return parseFloat((rate_token1 / rate_token2)).toFixed(decimals);
-        }
-    }
-
     async getBlockNumber() {
         const {result} = await this._zilliqa.blockchain.getNumTxBlocks();
         return parseInt(result ? result : "100");
-    }
-
-    async calcTokenAmountInOtherAmount({fromAddress, fromAmount, toAddress}) {
-        const rate = await this.priceOfTokenInOtherToken(fromAddress, toAddress);
-        return parseFloat(rate) * fromAmount;
     }
 
     async getAddLiquidityParams(addLiquidityDTO = new AddLiquidityDTO({})) {
@@ -466,14 +282,16 @@ module.exports = class SwapService {
                                       fromAmount,
                                       avatar = "empty",
                                       isTransfer,
-                                      recipientAddress
+                                      recipientAddress,
+                                      price,
                                   }) {
         if (fromAddress.toLowerCase() === toAddress.toLowerCase()) {
             throw new Error("no allowed to swap for same token");
         }
-        const price = await this.priceOfTokenInOtherToken(fromAddress, toAddress);
+        const fromToken = await this._tokenRepsitory.findToken(fromAddress);
+        const toToken = await this._tokenRepsitory.findToken(toAddress);
         if (fromAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
-            const decimals = await this.getDecimalsOfToken(toAddress);
+            const decimals = toToken.decimals;
             const carbAmount = parseFloat(fromAmount) * 10 ** 8;
             const toAmount = parseFloat(price) * parseFloat(fromAmount);
             const amount = (toAmount * 10 ** parseInt(decimals));
@@ -489,13 +307,10 @@ module.exports = class SwapService {
             return new SwapValue({
                 tag: "SwapExactCarbForTokens",
                 params,
-                fees: await this.getSwapFees({fromAddress, fromAmount}),
-                priceImpact: await this.getPriceImpact({fromAddress, toAddress, fromAmount}),
-                swapRewards: await this.getSwapRewards({fromAddress, fromAmount}),
-                zilAmount: 0
+                swapResult: await this.calculateSwapResult({fromToken, toToken, amount: fromAmount, isTransfer})
             });
         } else if (toAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
-            const decimals = await this.getDecimalsOfToken(fromAddress);
+            const decimals = fromToken.decimals;
             const tokenAmount = fromAmount * 10 ** parseInt(decimals);
             const toAmount = parseFloat(price) * parseFloat(fromAmount);
             const amount = (toAmount * 10 ** 8);
@@ -511,18 +326,12 @@ module.exports = class SwapService {
             return new SwapValue({
                 tag: "SwapExactTokensForCarb",
                 params,
-                fees: await this.getSwapFees({fromAddress, fromAmount}),
-                priceImpact: await this.getPriceImpact({fromAddress, toAddress, fromAmount}),
-                swapRewards: await this.getSwapRewards({fromAddress, fromAmount}),
-                zilAmount: fromAddress.toLowerCase() === zil_address ? tokenAmount : 0,
+                swapResult: await this.calculateSwapResult({fromToken, toToken, amount: fromAmount, isTransfer})
             });
         }
 
-        const fromDecimals = await this.getDecimalsOfToken(fromAddress);
-        const toDecimals = await this.getDecimalsOfToken(toAddress);
-
         const toAmount = parseFloat(price) * parseFloat(fromAmount);
-        const amount = (toAmount * 10 ** toDecimals);
+        const amount = (toAmount * 10 ** toToken.decimals);
         const tokenAmount = amount - (amount * this.min);
         const params = await this.getTokenToTokenParams(new SwapTokenForTokenDTO({
             toAddress,
@@ -537,10 +346,7 @@ module.exports = class SwapService {
         return new SwapValue({
             tag: "SwapExactTokensForTokens",
             params,
-            fees: await this.getSwapFees({fromAddress, fromAmount}),
-            priceImpact: await this.getPriceImpact({fromAddress, toAddress, fromAmount}),
-            swapRewards: await this.getSwapRewards({fromAddress, fromAmount}),
-            zilAmount: fromAddress.toLowerCase() === zil_address ? fromAmount * 10 ** fromDecimals : 0,
+            swapResult: await this.calculateSwapResult({fromToken, toToken, amount: fromAmount, isTransfer})
         });
     }
 
@@ -553,26 +359,15 @@ module.exports = class SwapService {
         return false;
     }
 
-    async getPriceOfTokenUSD(symbol) {
-        const data = (await axios.get("https://api.zilstream.com/tokens/" + symbol)).data;
-        if (data) {
-            return {
-                price: symbol.toLowerCase() === "zil" ? data.rate : data.rate_usd,
-                priceZIL: data.rate,
-            };
-        }
-        return {};
-    }
-
-    async calculateOutput({fromToken, toToken, amount, isTransfer}) {
-        const result = {
-            priceImpact: 0, // TODO
-            swapFees: 0,
-            txFees: isTransfer ? 11 : 6.5,
-            graphRewards: 0
-        };
+    async calculateSwapResult({fromToken, toToken, amount, isTransfer}) {
+        const txFees = isTransfer ? 11 : 6.5;
         if (!amount && amount <= 0) {
-            return result;
+            return new SwapResultValue({
+                priceImpact: 0, // TODO
+                swapFees: 0,
+                txFees,
+                graphRewards: 0
+            });
         }
 
         const fromCarbAmount = new BigNumber(fromToken.carbAmount);
@@ -581,20 +376,25 @@ module.exports = class SwapService {
         const toCarbAmount = new BigNumber(toToken.carbAmount);
         const toTokenAmount = new BigNumber(toToken.tokenAmount);
 
-        result.swapFees = await this.getSwapFees({fromAddress: fromToken.address, fromAmount: amount});
+        const swapFees = await this.getSwapFees({fromAddress: fromToken.address, fromAmount: amount});
 
         const SwapState = await this._fetcher.getSubState(fields.pools.pools);
 
         const graphPool = SwapState[fields.pools.pools][this._graphAddress];
 
-        const graphCarbAmount = new BigNumber(graphPool.arguments[0]).plus(new BigNumber(result.swapFees).multipliedBy(new BigNumber(10).pow(8)));
+        const graphCarbAmount = new BigNumber(graphPool.arguments[0]).plus(new BigNumber(swapFees).multipliedBy(new BigNumber(10).pow(8)));
         const graphAmount = new BigNumber(graphPool.arguments[1]);
 
         const rate = graphAmount.div(graphCarbAmount);
 
-        result.graphRewards = rate.multipliedBy(new BigNumber(result.swapFees)).toFixed(5);
+        const graphRewards = rate.multipliedBy(new BigNumber(swapFees)).toFixed(5);
 
-        return result;
+        return new SwapResultValue({
+            priceImpact: 0, // TODO
+            swapFees,
+            graphRewards,
+            txFees,
+        });
 
     }
 
@@ -602,61 +402,29 @@ module.exports = class SwapService {
         const SwapState = await this._fetcher.getSubState(fields.pools.pools);
         if (SwapState) {
             const pools = SwapState[fields.pools.pools];
-            const tokens = await Promise.all(Object.keys(pools).map(async token_address => {
-                if (token_address.toLowerCase() === zil_address) {
-                    const {result} = await this._zilliqa.blockchain.getBalance(forAddress.toLowerCase());
-                    return {
-                        decimals: 12,
-                        balance: result && result.balance ? result.balance : "0",
-                        symbol: "zil",
-                        name: "zilliqa",
-                        address: zil_address,
-                        logo: "https://meta.viewblock.io/ZIL/logo",
-                        carbAmount: pools[token_address].arguments[0],
-                        tokenAmount: pools[token_address].arguments[1],
-                        priceCarb: tokenToNumber(pools[token_address].arguments[0], 8) / tokenToNumber(pools[token_address].arguments[1], 12),
-                        ...(await this.getPriceOfTokenUSD("zil"))
-                    };
-                }
-                const tokenFetcher = this._zilliqa.contracts.at(token_address);
-                const init = await tokenFetcher.getInit();
-                const state = await tokenFetcher.getSubState("balances", [forAddress.toLowerCase()]);
-                const balance = state ? state["balances"][forAddress.toLowerCase()] : "0";
-                const token = init.reduce((acc, param) => ({
-                    ...acc,
-                    [param.vname]: param.value,
-                }), {balance, address: token_address});
-                const bech32 = toBech32Address(mapTestToMainAddresses[token_address] ? mapTestToMainAddresses[token_address] : token_address);
-                const symbol = "zilliqa";
-                token.logo = `https://meta.viewblock.io/${symbol}.${bech32}/logo`;
-                token.carbAmount = pools[token_address].arguments[0];
-                token.tokenAmount = pools[token_address].arguments[1];
-                token.priceCarb = tokenToNumber(pools[token_address].arguments[0], 8) / tokenToNumber(pools[token_address].arguments[1], token.decimals);
-                const tokenPrices = await (await this.getPriceOfTokenUSD(token.symbol.toLowerCase() === "graph" ? "carb" : token.symbol));
-                token.price = tokenPrices.price;
-                token.priceZIL = tokenPrices.priceZIL;
-                return token;
+            const tokens = await Promise.all(Object.keys(pools).map(async tokenAddress => await this._tokenRepsitory.findToken(tokenAddress)));
+            const tokenValues = await Promise.all(tokens.map(async token => new TokenAccountValue({
+                address: token.address,
+                logo: mapTokenToLogo(token),
+                priceUSD: await this._tokenRepsitory.getPriceOfTokenUSD(token.symbol),
+                priceZIL: await this._tokenRepsitory.getPriceOfTokenInZil(token.symbol),
+                symbol: token.symbol,
+                name: token.name,
+                balance: await this._balanceRepository.getBalanceOfToken(forAddress, token.address),
+                decimals: token.decimals,
+            })));
+            const carbToken = await this._tokenRepsitory.findToken(this._carbAddress);
+            tokenValues.push(new TokenAccountValue({
+                address: carbToken.address,
+                symbol: carbToken.symbol,
+                name: carbToken.name,
+                balance: await this._balanceRepository.getBalanceOfToken(forAddress, carbToken.address),
+                priceZIL: await this._tokenRepsitory.getPriceOfTokenInZil(carbToken.symbol),
+                logo: mapTokenToLogo(carbToken),
+                priceUSD: await this._tokenRepsitory.getPriceOfTokenUSD(carbToken.symbol),
+                decimals: carbToken.decimals,
             }));
-            const tokenFetcher = this._zilliqa.contracts.at(this._carbAddress);
-            const state = await tokenFetcher.getSubState("balances", [forAddress.toLowerCase()]);
-            const balance = state ? state["balances"][forAddress.toLowerCase()] : "0";
-            const bech32 = toBech32Address(mapTestToMainAddresses[this._carbAddress] ? mapTestToMainAddresses[this._carbAddress] : token_address);
-            const symbol = "zilliqa";
-            const carbPrices = await (await this.getPriceOfTokenUSD("carb"));
-            tokens.push({
-                address: this._carbAddress,
-                decimals: 8,
-                balance,
-                symbol: "CARB",
-                name: "CARBON",
-                logo: `https://meta.viewblock.io/${symbol}.${bech32}/logo`,
-                carbAmount: 1,
-                tokenAmount: 1,
-                priceCarb: 1,
-                price: carbPrices.price,
-                priceZIL: carbPrices.priceZIL,
-            });
-            return tokens;
+            return tokenValues;
         }
         return [];
     }
