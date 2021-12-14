@@ -362,9 +362,9 @@ module.exports = class SwapService {
         return false;
     }
 
-    async calculateSwapResult({fromToken, toToken, amount, isTransfer}) {
+    async calculateSwapResult({fromToken, toToken, fromAmount, isTransfer}) {
         const txFees = isTransfer ? 11 : 6.5;
-        if (!amount && amount <= 0) {
+        if (!fromAmount && fromAmount <= 0) {
             return new SwapResultValue({
                 priceImpact: 0, // TODO
                 swapFees: 0,
@@ -379,7 +379,7 @@ module.exports = class SwapService {
         const toCarbAmount = new BigNumber(toToken.carbAmount);
         const toTokenAmount = new BigNumber(toToken.tokenAmount);
 
-        const swapFees = await this.getSwapFees({fromAddress: fromToken.address, fromAmount: amount});
+        const swapFees = await this.getSwapFees({fromAddress: fromToken.address, fromAmount});
 
         const SwapState = await this._fetcher.getSubState(fields.pools.pools);
 
