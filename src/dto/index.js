@@ -4,4 +4,8 @@ module.exports = {
     SwapTokenForTokenDTO: require("./SwapTokenForTokenDTO"),
     SwapCarbForTokenDTO: require("./SwapCarbForTokenDTO"),
     SwapTokenForCarbDTO: require("./SwapTokenForCarbDTO"),
+    GetTokenOfAccountInSwapDTO: require("./GetTokenOfAccountInSwapDTO"),
+    GetPoolsOfAccountDTO: require("./GetPoolsOfAccountDTO"),
+    IsTokenUnLockedDTO: require("./IsTokenUnLockedDTO"),
+    CalculateSwapResultDTO: require("./CalculateSwapResultDTO"),
 }
