@@ -19,7 +19,9 @@ module.exports = class SwapDSK {
             host: "",
             contractAddress: swapContract,
             graphAddress: graphContract,
-            carbAddress: carbContract
+            carbAddress: carbContract,
+            tokenRepository: this._tokenRepo,
+            balanceRepository: this._balanceRepo,
         });
         this._poolService = new PoolService({
             contractAddress: swapContract,
