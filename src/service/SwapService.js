@@ -425,7 +425,7 @@ module.exports = class SwapService {
                 address: carbToken.address,
                 symbol: carbToken.symbol,
                 name: carbToken.name,
-                balance: forAddress ? await this._balanceRepository.getBalanceOfToken(forAddress, carbToken.address) : forAddress,
+                balance: forAddress ? await this._balanceRepository.getBalanceOfToken(forAddress, carbToken.address) : 0,
                 priceZIL: await this._tokenRepository.getPriceOfTokenInZil(carbToken.symbol),
                 logo: mapTokenToLogo(carbToken),
                 priceUSD: await this._tokenRepository.getPriceOfTokenUSD(carbToken.symbol),
