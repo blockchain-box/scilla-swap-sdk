@@ -413,7 +413,7 @@ module.exports = class SwapService {
                 priceZIL: await this._tokenRepository.getPriceOfTokenInZil(token.symbol),
                 symbol: token.symbol,
                 name: token.name,
-                balance: await this._balanceRepository.getBalanceOfToken(forAddress, token.address),
+                balance: forAddress ? await this._balanceRepository.getBalanceOfToken(forAddress, token.address) : 0,
                 decimals: token.decimals,
                 priceCarb: this._tokenRepository.priceOfTokenInCarbWithPool(token, {
                     carbAmount: pools[token.address].arguments[0],
@@ -425,7 +425,7 @@ module.exports = class SwapService {
                 address: carbToken.address,
                 symbol: carbToken.symbol,
                 name: carbToken.name,
-                balance: await this._balanceRepository.getBalanceOfToken(forAddress, carbToken.address),
+                balance: forAddress ? await this._balanceRepository.getBalanceOfToken(forAddress, carbToken.address) : forAddress,
                 priceZIL: await this._tokenRepository.getPriceOfTokenInZil(carbToken.symbol),
                 logo: mapTokenToLogo(carbToken),
                 priceUSD: await this._tokenRepository.getPriceOfTokenUSD(carbToken.symbol),
