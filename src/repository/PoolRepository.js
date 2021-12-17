@@ -25,21 +25,21 @@ module.exports = class PoolRepository {
         return null;
     }
 
-    async getLPBalance({tokenAddresses, account, swapAddress}) {
+    async getLPBalance({tokenAddress, account, swapAddress}) {
         const swapContract = this._zilliqa.contracts.at(swapAddress);
-        const swapState = await swapContract.getSubState(fields.balances.balances, [account.toLowerCase()]);
+        const swapState = await swapContract.getSubState(fields.balances.balances, [tokenAddress.toLowerCase()]);
         if (swapState) {
-            const balance = swapState[fields.balances.balances][account.toLowerCase()][tokenAddresses.toLowerCase()];
+            const balance = swapState[fields.balances.balances][tokenAddress.toLowerCase()][account.toLowerCase()];
             return balance ? balance : 0;
         }
         return 0;
     }
 
-    async getTotalBalance({tokenAddresses, swapAddress}) {
+    async getTotalBalance({tokenAddress, swapAddress}) {
         const swapContract = this._zilliqa.contracts.at(swapAddress);
-        const swapState = await swapContract.getSubState(fields.total_contributions.total_contributions, [tokenAddresses.toLowerCase()]);
+        const swapState = await swapContract.getSubState(fields.total_contributions.total_contributions, [tokenAddress.toLowerCase()]);
         if (swapState) {
-            const balance = swapState[fields.balances.balances][tokenAddresses.toLowerCase()];
+            const balance = swapState[fields.total_contributions.total_contributions][tokenAddress.toLowerCase()];
             return balance ? balance : 0;
         }
         return 0;
