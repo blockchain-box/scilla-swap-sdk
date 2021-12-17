@@ -53,6 +53,7 @@ module.exports = class PoolService {
                 }),
                 tokenAmount: pools[token.address].arguments[1],
                 carbAmount: pools[token.address].arguments[0],
+                carbLogo: mapTokenToLogo({address: this._carbAddress}),
             })));
         }
         return [];
@@ -101,6 +102,7 @@ module.exports = class PoolService {
                     priceUSD: await this._tokenRepository.getPriceOfTokenUSD("carb"),
                     carbAmount: pool.carbAmount,
                     tokenAmount: pool.tokenAmount,
+                    carbLogo: mapTokenToLogo({address: this._carbAddress}),
                 });
             }));
             return allPools.filter(pool => pool !== null);
