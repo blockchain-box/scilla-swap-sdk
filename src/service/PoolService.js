@@ -72,7 +72,7 @@ module.exports = class PoolService {
             })));
             const allPools = await Promise.all(pools.map(async pool => {
                 const lpBalance = await this._poolRepository.getLPBalance({
-                    tokenAddresses: pool.token.address,
+                    tokenAddress: pool.token.address,
                     account: forAddress,
                     swapAddress: this._address
                 });
