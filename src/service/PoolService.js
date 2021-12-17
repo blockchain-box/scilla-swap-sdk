@@ -37,7 +37,7 @@ module.exports = class PoolService {
             const pools = state[fields.pools.pools];
             const tokenAddress = Object.keys(pools);
             const tokens = await Promise.all(tokenAddress.map(async tokenAddress => await this._tokenRepository.findToken(tokenAddress)));
-            return tokens.map(async token => new PoolValue({
+            return Promise.all(tokens.map(async token => new PoolValue({
                 token: new TokenValue({
                     address: token.address,
                     name: token.name,
@@ -53,21 +53,32 @@ module.exports = class PoolService {
                 }),
                 tokenAmount: pools[token.address].arguments[1],
                 carbAmount: pools[token.address].arguments[0],
-            }))
+            })));
         }
         return [];
     }
 
     async getPoolsOfAccount(forAddress) {
-        const balanceState = await this._fetcher.getSubState(fields.balances.balances, [forAddress.toLowerCase()]);
-        if (balanceState) {
-            const tokenAddresses = Object.keys(balanceState[fields.balances.balances][forAddress.toLowerCase]);
+        if (!forAddress) {
+            return [];
+        }
+        const state = await this._fetcher.getSubState(fields.pools.pools);
+        if (state && state[fields.pools.pools]) {
+            const tokenAddresses = Object.keys(state[fields.pools.pools]);
             const tokens = await Promise.all(tokenAddresses.map(async address => await this._tokenRepository.findToken(address)));
             const pools = await Promise.all(tokens.map(async token => await this._poolRepository.findPool({
                 token: token,
                 swapAddress: this._address
             })));
-            return Promise.all(pools.map(async pool => {
+            const allPools = await Promise.all(pools.map(async pool => {
+                const lpBalance = await this._poolRepository.getLPBalance({
+                    tokenAddresses: pool.token.address,
+                    account: forAddress,
+                    swapAddress: this._address
+                });
+                if (!lpBalance) {
+                    return null;
+                }
                 return new PoolAccountValue({
                     account: forAddress,
                     token: new TokenAccountValue({
@@ -81,21 +92,18 @@ module.exports = class PoolService {
                         decimals: pool.token.decimals,
                         priceCarb: this._tokenRepository.priceOfTokenInCarbWithPool(pool.token, pool, this._carbAddress)
                     }),
-                    lpBalance: await this._poolRepository.getLPBalance({
-                        tokenAddresses: pool.token.address,
-                        account: forAddress,
-                        swapAddress: this._address
-                    }),
+                    lpBalance,
                     totalBalance: await this._poolRepository.getTotalBalance({
-                        tokenAddresses: pool.token.address,
+                        tokenAddress: pool.token.address,
                         swapAddress: this._address
                     }),
                     tokenBalance: await this._balanceRepository.getBalanceOfToken(forAddress, pool.token.address),
-                    priceUSD: await this._tokenRepository.getPriceOfTokenUSD(pool.token.symbol),
+                    priceUSD: await this._tokenRepository.getPriceOfTokenUSD("carb"),
                     carbAmount: pool.carbAmount,
                     tokenAmount: pool.tokenAmount,
                 });
             }));
+            return allPools.filter(pool => pool !== null);
         }
         return [];
     }
