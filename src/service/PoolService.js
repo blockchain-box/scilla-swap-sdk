@@ -9,6 +9,7 @@ const TokenAccountValue = require("../value/TokenAccountValue");
 const mapTokenToLogo = require("../share/mapTokenToLogo");
 const PoolValue = require("../value/PoolValue");
 const TokenValue = require("../value/TokenValue");
+const Token = require("../model/Token");
 
 module.exports = class PoolService {
     constructor({
@@ -53,7 +54,7 @@ module.exports = class PoolService {
                 }),
                 tokenAmount: pools[token.address].arguments[1],
                 carbAmount: pools[token.address].arguments[0],
-                carbLogo: mapTokenToLogo({address: this._carbAddress}),
+                carbLogo: mapTokenToLogo(new Token({address: this._carbAddress})),
             })));
         }
         return [];
@@ -102,7 +103,7 @@ module.exports = class PoolService {
                     priceUSD: await this._tokenRepository.getPriceOfTokenUSD("carb"),
                     carbAmount: pool.carbAmount,
                     tokenAmount: pool.tokenAmount,
-                    carbLogo: mapTokenToLogo({address: this._carbAddress}),
+                    carbLogo: mapTokenToLogo(new Token({address: this._carbAddress})),
                 });
             }));
             return allPools.filter(pool => pool !== null);
