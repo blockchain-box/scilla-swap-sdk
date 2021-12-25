@@ -296,16 +296,19 @@ module.exports = class SwapService {
         if (fromAddress.toLowerCase() === toAddress.toLowerCase()) {
             throw new Error("no allowed to swap for same token");
         }
+
         this._deadline_block = blocks ? blocks : this._deadline_block;
         const fromToken = await this._tokenRepository.findToken(fromAddress);
         const toToken = await this._tokenRepository.findToken(toAddress);
+
         const to_denom = new BigNumber(10).pow(new BigNumber(toToken.decimals));
         const from_denom = new BigNumber(10).pow(new BigNumber(fromToken.decimals));
+
         fromAmount = isMax ? await this._balanceRepository.getBalanceOfToken(account, fromAddress) : new BigNumber(fromAmount).multipliedBy(from_denom).toString();
+        const toAmount = new BigNumber(price).multipliedBy(new BigNumber(fromAmount).div(from_denom)).toString();
 
         if (fromAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
             const carbAmount = fromAmount;
-            const toAmount = new BigNumber(price).multipliedBy(fromAmount).toString();
             const amount = new BigNumber(toAmount).multipliedBy(to_denom).toString();
             const tokenAmount = new BigNumber(amount).minus(new BigNumber(amount).multipliedBy(slippage)).toString();
             const params = await this.getCarbToTokenParams(new SwapCarbForTokenDTO({
@@ -324,7 +327,6 @@ module.exports = class SwapService {
             });
         } else if (toAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
             const tokenAmount = fromAmount;
-            const toAmount = new BigNumber(price).multipliedBy(new BigNumber(fromAmount)).toString();
             const amount = new BigNumber(toAmount).multipliedBy(to_denom).toString();
             const carbAmount = new BigNumber(amount).minus(new BigNumber(amount).multipliedBy(slippage)).toString();
             const params = await this.getTokenToCarbParams(new SwapTokenForCarbDTO({
@@ -343,7 +345,6 @@ module.exports = class SwapService {
             });
         }
 
-        const toAmount = new BigNumber(price).multipliedBy(fromAmount).toString();
         const amount = new BigNumber(toAmount).multipliedBy(to_denom).toString();
         const tokenAmount = new BigNumber(amount).minus(new BigNumber(amount).multipliedBy(slippage)).toString();
         const params = await this.getTokenToTokenParams(new SwapTokenForTokenDTO({
