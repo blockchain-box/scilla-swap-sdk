@@ -9,6 +9,7 @@ const GetPoolsOfAccountDTO = require("./src/dto/GetPoolsOfAccountDTO");
 const GetTokenOfAccountInSwapDTO = require("./src/dto/GetTokenOfAccountInSwapDTO");
 const CalculateSwapResultDTO = require("./src/dto/CalculateSwapResultDTO");
 const SwapPriceService = require("./src/service/SwapPriceService");
+const CalculateSwapParamsDTO = require("./src/dto/CalculateSwapParamsDTO");
 
 module.exports = class SwapDSK {
     constructor({nodeAPI, swapContract, carbContract, graphContract}) {
@@ -59,5 +60,9 @@ module.exports = class SwapDSK {
 
     async calculateSwapResult(req = new CalculateSwapResultDTO({})) { // SwapResultValue
         return this._swapService.calculateSwapResult(req);
+    }
+
+    async calculateSwapParams(req = new CalculateSwapParamsDTO({})) {
+        return this._swapService.getSwapTokenToTokenCall(req);
     }
 };
