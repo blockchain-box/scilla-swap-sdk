@@ -44,7 +44,7 @@ module.exports = {
         value: value.toString().trim()
     }),
     Bool: (name, value = false) => ({
-        vaname: name,
+        vname: name,
         type: "Bool",
         value: {constructor: value === true ? "True" : "False", argtypes: [], arguments: []}
     }),
