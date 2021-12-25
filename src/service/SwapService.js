@@ -279,26 +279,35 @@ module.exports = class SwapService {
         return fees * price;
     }
 
+
     async getSwapTokenToTokenCall({
+                                      account,
                                       fromAddress,
+                                      isMax,
                                       toAddress,
                                       fromAmount,
                                       avatar = "empty",
                                       isTransfer,
                                       recipientAddress,
                                       price,
+                                      slippage,
+                                      blocks,
                                   }) {
         if (fromAddress.toLowerCase() === toAddress.toLowerCase()) {
             throw new Error("no allowed to swap for same token");
         }
+        this._deadline_block = blocks ? blocks : this._deadline_block;
         const fromToken = await this._tokenRepository.findToken(fromAddress);
         const toToken = await this._tokenRepository.findToken(toAddress);
+        const to_denom = new BigNumber(10).pow(new BigNumber(toToken.decimals));
+        const from_denom = new BigNumber(10).pow(new BigNumber(fromToken.decimals));
+        fromAmount = isMax ? await this._balanceRepository.getBalanceOfToken(account, fromAddress) : new BigNumber(fromAmount).multipliedBy(from_denom).toString();
+
         if (fromAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
-            const decimals = toToken.decimals;
-            const carbAmount = parseFloat(fromAmount) * 10 ** 8;
-            const toAmount = parseFloat(price) * parseFloat(fromAmount);
-            const amount = (toAmount * 10 ** parseInt(decimals));
-            const tokenAmount = amount - (amount * this.min);
+            const carbAmount = fromAmount;
+            const toAmount = new BigNumber(price).multipliedBy(fromAmount).toString();
+            const amount = new BigNumber(toAmount).multipliedBy(to_denom).toString();
+            const tokenAmount = new BigNumber(amount).minus(new BigNumber(amount).multipliedBy(slippage)).toString();
             const params = await this.getCarbToTokenParams(new SwapCarbForTokenDTO({
                 carbAmount,
                 minTokenAmount: tokenAmount,
@@ -310,14 +319,14 @@ module.exports = class SwapService {
             return new SwapValue({
                 tag: "SwapExactCarbForTokens",
                 params,
-                swapResult: await this.calculateSwapResult({fromToken, toToken, amount: fromAmount, isTransfer})
+                swapResult: await this.calculateSwapResult({fromToken, toToken, amount: fromAmount, isTransfer}),
+                zilAmount: 0,
             });
         } else if (toAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
-            const decimals = fromToken.decimals;
-            const tokenAmount = fromAmount * 10 ** parseInt(decimals);
-            const toAmount = parseFloat(price) * parseFloat(fromAmount);
-            const amount = (toAmount * 10 ** 8);
-            const carbAmount = amount - (amount * this.min);
+            const tokenAmount = fromAmount;
+            const toAmount = new BigNumber(price).multipliedBy(new BigNumber(fromAmount)).toString();
+            const amount = new BigNumber(toAmount).multipliedBy(to_denom).toString();
+            const carbAmount = new BigNumber(amount).minus(new BigNumber(amount).multipliedBy(slippage)).toString();
             const params = await this.getTokenToCarbParams(new SwapTokenForCarbDTO({
                 recipientAddress,
                 avatar,
@@ -329,27 +338,29 @@ module.exports = class SwapService {
             return new SwapValue({
                 tag: "SwapExactTokensForCarb",
                 params,
-                swapResult: await this.calculateSwapResult({fromToken, toToken, amount: fromAmount, isTransfer})
+                swapResult: await this.calculateSwapResult({fromToken, toToken, amount: fromAmount, isTransfer}),
+                zilAmount: fromAddress === zilAddress ? tokenAmount : 0,
             });
         }
 
-        const toAmount = parseFloat(price) * parseFloat(fromAmount);
-        const amount = (toAmount * 10 ** toToken.decimals);
-        const tokenAmount = amount - (amount * this.min);
+        const toAmount = new BigNumber(price).multipliedBy(fromAmount).toString();
+        const amount = new BigNumber(toAmount).multipliedBy(to_denom).toString();
+        const tokenAmount = new BigNumber(amount).minus(new BigNumber(amount).multipliedBy(slippage)).toString();
         const params = await this.getTokenToTokenParams(new SwapTokenForTokenDTO({
             toAddress,
             fromAddress,
             isTransfer,
             recipientAddress,
             avatar,
-            fromAmount: fromAmount * 10 ** fromDecimals,
+            fromAmount,
             minToAmount: tokenAmount,
         }));
 
         return new SwapValue({
             tag: "SwapExactTokensForTokens",
             params,
-            swapResult: await this.calculateSwapResult({fromToken, toToken, amount: fromAmount, isTransfer})
+            swapResult: await this.calculateSwapResult({fromToken, toToken, amount: fromAmount, isTransfer}),
+            zilAmount: fromAddress === zilAddress ? fromAmount : "0",
         });
     }
 
