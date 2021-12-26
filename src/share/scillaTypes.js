@@ -11,17 +11,17 @@ module.exports = {
     Uint32: (name, value = BigInt(0)) => ({
         vname: name.trim(),
         type: "Uint32",
-        value: BigInt(value.toString().trim()).toString()
+        value: value.toString().trim().split(".")[0]
     }),
     Uint128: (name, value = BigInt(0)) => ({
         vname: name.trim(),
         type: "Uint128",
-        value: BigInt(value.toString().trim()).toString()
+        value: value.toString().trim().split(".")[0]
     }),
     Uint256: (name, value = BigInt(0)) => ({
         vname: name.trim(),
         type: "Uint128",
-        value: BigInt(value.toString().trim()).toString()
+        value: value.toString().trim().split(".")[0]
     }),
     ByStr20: (name, value = "") => ({
         vname: name.trim(),
@@ -31,7 +31,7 @@ module.exports = {
     BNum: (name, value = "") => ({
         vname: name,
         type: "BNum",
-        value: BigInt(value.toString().trim()).toString()
+        value: value.toString().trim().split(".")[0]
     }),
     ListByStr20: (name, values = []) => ({
         vname: name.trim(),
