@@ -269,8 +269,9 @@ module.exports = class SwapService {
         if (fromAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
             return parseFloat(fromAmount) * fees;
         }
-        const price = await this._swapPriceService.priceOfTokenInOtherToken(this._carbAddress, fromAddress);
-        return parseFloat((price * parseFloat(fromAmount) * fees).toFixed(5));
+        const price = await this._swapPriceService.priceOfTokenInOtherToken(fromAddress === zil_address ? this._carbAddress : fromAddress, fromAddress === zil_address ? fromAddress : this._carbAddress);
+        const total = new BigNumber(price).multipliedBy(new BigNumber(fromAmount));
+        return total.multipliedBy(new BigNumber(fees)).toNumber().toFixed(5);
     }
 
     async getSwapRewards({fromAddress, fromAmount}) {
