@@ -375,14 +375,40 @@ module.exports = class SwapService {
         return false;
     }
 
-    async calculateSwapResult({fromToken, toToken, fromAmount, isTransfer}) {
+    async getCarbBalance(account) {
+        if (!account) {
+            return "0.000";
+        }
+        const state = await this._fetcher.getSubState(fields.carb_balances.carb_balances, [account.toLowerCase()]);
+        if (state) {
+            return new BigNumber(state[fields.carb_balances.carb_balances][account.toLowerCase()]).div(10 ** 8).toNumber().toFixed(3);
+        }
+        return "0.000";
+    }
+
+    async getGraphBalance(account) {
+        if (!account) {
+            return "0.000";
+        }
+        const state = await this._fetcher.getSubState(fields.graph_balances.graph_balances, [account.toLowerCase()]);
+        if (state) {
+            return new BigNumber(state[fields.graph_balances.graph_balances][account.toLowerCase()]).div(10 ** 8).toNumber().toFixed(3);
+        }
+        return "0.000";
+    }
+
+    async calculateSwapResult({forAddress, fromToken, toToken, fromAmount, isTransfer}) {
         const txFees = isTransfer ? 11 : 6.5;
+        const carbBalance = await this.getCarbBalance(forAddress);
+        const graphBalance = await this.getGraphBalance(forAddress);
         if (!fromAmount && fromAmount <= 0) {
             return new SwapResultValue({
                 priceImpact: 0, // TODO
                 swapFees: 0,
                 txFees,
-                graphRewards: 0
+                graphRewards: 0,
+                carbBalance,
+                graphBalance,
             });
         }
 
@@ -410,6 +436,8 @@ module.exports = class SwapService {
             swapFees,
             graphRewards,
             txFees,
+            carbBalance,
+            graphBalance,
         });
 
     }
