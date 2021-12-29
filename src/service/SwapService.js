@@ -283,9 +283,9 @@ module.exports = class SwapService {
 
     async getSwapTokenToTokenCall({
                                       account,
-                                      fromAddress,
+                                      fromToken,
                                       isMax,
-                                      toAddress,
+                                      toToken,
                                       fromAmount,
                                       avatar = "empty",
                                       isTransfer,
@@ -294,13 +294,13 @@ module.exports = class SwapService {
                                       slippage,
                                       blocks,
                                   }) {
+        const fromAddress = fromToken.address;
+        const toAddress = toToken.address;
         if (fromAddress.toLowerCase() === toAddress.toLowerCase()) {
             throw new Error("no allowed to swap for same token");
         }
 
         this._deadline_block = blocks ? blocks : this._deadline_block;
-        const fromToken = await this._tokenRepository.findToken(fromAddress);
-        const toToken = await this._tokenRepository.findToken(toAddress);
 
         const to_denom = new BigNumber(10).pow(new BigNumber(toToken.decimals));
         const from_denom = new BigNumber(10).pow(new BigNumber(fromToken.decimals));
@@ -323,7 +323,6 @@ module.exports = class SwapService {
             return new SwapValue({
                 tag: "SwapExactCarbForTokens",
                 params,
-                swapResult: await this.calculateSwapResult({fromToken, toToken, amount: fromAmount, isTransfer}),
                 zilAmount: 0,
             });
         } else if (toAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
@@ -341,7 +340,6 @@ module.exports = class SwapService {
             return new SwapValue({
                 tag: "SwapExactTokensForCarb",
                 params,
-                swapResult: await this.calculateSwapResult({fromToken, toToken, amount: fromAmount, isTransfer}),
                 zilAmount: fromAddress === zilAddress ? tokenAmount : 0,
             });
         }
@@ -361,7 +359,6 @@ module.exports = class SwapService {
         return new SwapValue({
             tag: "SwapExactTokensForTokens",
             params,
-            swapResult: await this.calculateSwapResult({fromToken, toToken, amount: fromAmount, isTransfer}),
             zilAmount: fromAddress === zilAddress ? fromAmount : "0",
         });
     }

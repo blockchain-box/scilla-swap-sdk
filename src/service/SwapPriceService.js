@@ -46,4 +46,55 @@ module.exports = class SwapPriceService {
             return parseFloat((parseFloat(rate_token1) / parseFloat(rate_token2)).toFixed(fromToken.decimals));
         }
     }
+
+    calculateCarbToTokenRate({toToken, carbAmount, pool}) {
+        if (toToken.address.toLowerCase() === this._carbAddress.toLowerCase()) {
+            return "1.000";
+        }
+        const carbDenom = new BigNumber(10).pow(8);
+        const tokenDenom = new BigNumber(10).pow(toToken.decimals);
+        const totalCarbAmount = (new BigNumber(pool.carbAmount).plus(new BigNumber(carbAmount))).div(carbDenom);
+        const totalTokenAmount = new BigNumber(pool.tokenAmount).div(tokenDenom);
+        return totalCarbAmount.div(totalTokenAmount).toNumber().toFixed(8);
+    }
+
+    calculateTokenToCarbRate({toToken, tokenAmount, pool}) {
+        if (toToken.address.toLowerCase() === this._carbAddress.toLowerCase()) {
+            return "1.000";
+        }
+        const carbDenom = new BigNumber(10).pow(8);
+        const tokenDenom = new BigNumber(10).pow(toToken.decimals);
+        const totalCarbAmount = new BigNumber(pool.carbAmount).div(carbDenom);
+        const totalTokenAmount = (new BigNumber(pool.tokenAmount).plus(new BigNumber(tokenAmount))).div(tokenDenom);
+        return totalCarbAmount.div(totalTokenAmount).toNumber().toFixed(parseInt(toToken.decimals));
+    }
+
+    calculateCarbToTokenSwap({toToken, carbAmount, pool}) {
+        return new BigNumber(this.calculateCarbToTokenRate({toToken, carbAmount, pool}))
+            .multipliedBy(carbAmount).toNumber().toFixed(parseInt(toToken.decimals));
+    }
+
+    calculateTokenToCarbSwap({toToken, tokenAmount, pool}) {
+        return new BigNumber(this.calculateTokenToCarbRate({toToken, tokenAmount, pool}))
+            .multipliedBy(tokenAmount).toNumber().toFixed(8);
+    }
+
+    calculateTokenToTokenSwap({isFrom, toToken, fromToken, fromAmount, toAmount, fromPool, toPool}) {
+        if (isFrom) {
+            const fromTokenToCarb = this.calculateTokenToCarbSwap({
+                toToken: fromToken,
+                tokenAmount: fromAmount,
+                pool: fromPool
+            });
+            const fromCarbToToken = this.calculateCarbToTokenSwap({toToken, carbAmount: fromTokenToCarb, pool: toPool});
+            return fromCarbToToken;
+        }
+        const toTokenToCarb = this.calculateTokenToCarbSwap({toToken, tokenAmount: toAmount, pool: toPool});
+        const fromCarbToToken = this.calculateCarbToTokenSwap({
+            toToken: fromToken,
+            carbAmount: toTokenToCarb,
+            pool: fromPool
+        });
+        return fromCarbToToken
+    }
 }

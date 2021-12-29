@@ -16,6 +16,12 @@ module.exports = class SwapDSK {
         this._tokenRepo = new TokenRepository({nodeAPI});
         this._poolRepo = new PoolRepository({nodeAPI});
         this._balanceRepo = new BalanceRepository({nodeAPI});
+        this._swapPriceService = new SwapPriceService({
+            swapAddress: swapContract,
+            carbAddress: carbContract,
+            tokenRepository: this._tokenRepo,
+            poolRepository: this._poolRepo,
+        });
         this._swapService = new SwapService({
             nodeAPI,
             host: "",
@@ -24,12 +30,7 @@ module.exports = class SwapDSK {
             carbAddress: carbContract,
             tokenRepository: this._tokenRepo,
             balanceRepository: this._balanceRepo,
-            swapPriceService: new SwapPriceService({
-                swapAddress: swapContract,
-                carbAddress: carbContract,
-                tokenRepository: this._tokenRepo,
-                poolRepository: this._poolRepo,
-            }),
+            swapPriceService: this._swapPriceService,
         });
         this._poolService = new PoolService({
             contractAddress: swapContract,
@@ -65,4 +66,34 @@ module.exports = class SwapDSK {
     async calculateSwapParams(req = new CalculateSwapParamsDTO({})) {
         return this._swapService.getSwapTokenToTokenCall(req);
     }
+
+    calculateSwapTokens({isFrom, toToken, fromToken, fromAmount, toAmount, fromPool, toPool}) {
+        return this._swapPriceService.calculateTokenToTokenSwap({
+            isFrom,
+            toToken,
+            fromToken,
+            fromAmount,
+            toAmount,
+            fromPool,
+            toPool
+        })
+    }
+
+    calculateTokenToCarbSwap({toToken, tokenAmount, pool}) {
+        return this._swapPriceService.calculateTokenToCarbSwap({toToken, tokenAmount, pool});
+    }
+
+    calculateCarbToTokenSwap({toToken, carbAmount, pool}) {
+        return this._swapPriceService.calculateCarbToTokenSwap({toToken, carbAmount, pool});
+    }
+
+    calculateTokenToCarbRate({toToken, tokenAmount, pool}) {
+        return this._swapPriceService.calculateTokenToCarbRate({toToken, tokenAmount, pool});
+    }
+
+    calculateCarbToTokenRate({toToken, carbAmount, pool}) {
+        return this._swapPriceService.calculateCarbToTokenRate({toToken, carbAmount, pool});
+    }
+
+
 };
