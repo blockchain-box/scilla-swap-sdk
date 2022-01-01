@@ -1,6 +1,7 @@
 const PoolRepository = require("../repository/PoolRepository");
 const BigNumber = require("bignumber.js");
 const TokenRepository = require("../repository/TokenRepository");
+const fields = require("../share/swapFields");
 
 module.exports = class SwapPriceService {
     constructor({
@@ -129,7 +130,22 @@ module.exports = class SwapPriceService {
     }
 
 
-    calculateTokenToTokenSwap({isFrom, toToken, fromToken, fromAmount, toAmount, fromPool, toPool}) {
+    getSwapFees(fromToken, toToken, amount, pool) {
+        const fees = 0.025;
+        if (fromToken.address === this._carbAddress.toLowerCase()) {
+            return parseFloat(amount) * fees;
+        }
+        const {expectedAmount} = this.getRatesForInput(fromToken, toToken, new BigNumber(amount).shiftedBy(fromToken.decimals), pool, pool);
+        return new BigNumber(expectedAmount).shiftedBy(-8).toNumber().toFixed(8);
+    }
+
+    getSwapRewards(carbToken, graphToken, graphPool, amount) {
+        const {expectedAmount} = this.getRatesForInput(carbToken, graphToken, new BigNumber(amount).shiftedBy(graphToken.decimals), graphPool, graphPool);
+        return new BigNumber(expectedAmount).shiftedBy(-8);
+    }
+
+
+    calculateTokenToTokenSwap({isFrom, toToken, fromToken, fromAmount, toAmount, fromPool, toPool, carbToken, graphToken, graphPool}) {
         const srcAmount = isFrom ? fromAmount : toAmount;
         let rateResult;
         if (isFrom) {
@@ -146,12 +162,18 @@ module.exports = class SwapPriceService {
         const price_decimals = isFrom ? -toToken.decimals : fromToken.decimals;
         const expectedExchangeRate = !price || price === "NaN" ? "0.000" : new BigNumber(price).shiftedBy(price_decimals).toNumber().toFixed(toToken.decimals);
         const isEnoughToToken = isFrom ? new BigNumber(toToken.address === this._carbAddress ? fromPool.carbAmount : toPool.tokenAmount).lt(new BigNumber(rateResult.expectedAmount).plus(1)) : false;
+
+        const swapFees = this.getSwapFees(fromToken, srcAmount, fromPool ? fromPool : toPool);
+        const swapRewards = this.getSwapRewards(carbToken, graphToken, graphPool, swapFees);
+
         return {
             ...rateResult,
             amountHuman: expectedAmountUnits.toNumber().toFixed(decimals),
             expectedExchangeRate,
             isInsufficientReserves: (!price || price === "NaN" || bigAmount.isNaN() || isEnoughToToken || (new BigNumber(srcAmount).gt(0) && new BigNumber(expectedExchangeRate).eq(0))) && new BigNumber(srcAmount).gt(0),
             expectedSlippage: new BigNumber(rateResult.slippage).shiftedBy(-2).toNumber(),
+            swapFees,
+            swapRewards,
         };
     }
 }
