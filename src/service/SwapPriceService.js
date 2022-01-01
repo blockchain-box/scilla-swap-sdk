@@ -136,7 +136,7 @@ module.exports = class SwapPriceService {
             return parseFloat(amount) * fees;
         }
         const {expectedAmount} = this.getRatesForInput(fromToken, toToken, new BigNumber(amount).shiftedBy(fromToken.decimals), pool, pool);
-        return new BigNumber(expectedAmount).shiftedBy(-8).toNumber().toFixed(8);
+        return new BigNumber(expectedAmount).shiftedBy(-8).multipliedBy(fees).toNumber().toFixed(8);
     }
 
     getSwapRewards(carbToken, graphToken, graphPool, amount) {
@@ -163,7 +163,7 @@ module.exports = class SwapPriceService {
         const expectedExchangeRate = !price || price === "NaN" ? "0.000" : new BigNumber(price).shiftedBy(price_decimals).toNumber().toFixed(toToken.decimals);
         const isEnoughToToken = isFrom ? new BigNumber(toToken.address === this._carbAddress ? fromPool.carbAmount : toPool.tokenAmount).lt(new BigNumber(rateResult.expectedAmount).plus(1)) : false;
 
-        const swapFees = this.getSwapFees(fromToken, srcAmount, fromPool ? fromPool : toPool);
+        const swapFees = this.getSwapFees(fromToken, carbToken, srcAmount, fromPool ? fromPool : toPool);
         const swapRewards = this.getSwapRewards(carbToken, graphToken, graphPool, swapFees);
 
         return {

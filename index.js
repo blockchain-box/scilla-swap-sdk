@@ -67,7 +67,18 @@ module.exports = class SwapDSK {
         return this._swapService.getSwapTokenToTokenCall(req);
     }
 
-    calculateSwapTokens({isFrom, toToken, fromToken, fromAmount, toAmount, fromPool, toPool}) {
+    calculateSwapTokens({
+                            isFrom,
+                            toToken,
+                            fromToken,
+                            fromAmount,
+                            toAmount,
+                            fromPool,
+                            toPool,
+                            carbToken,
+                            graphToken,
+                            graphPool
+                        }) {
         return this._swapPriceService.calculateTokenToTokenSwap({
             isFrom,
             toToken,
@@ -75,9 +86,11 @@ module.exports = class SwapDSK {
             fromAmount,
             toAmount,
             fromPool,
-            toPool
+            toPool,
+            carbToken,
+            graphToken,
+            graphPool
         });
     }
-
 
 };
