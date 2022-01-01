@@ -141,12 +141,17 @@ module.exports = class SwapPriceService {
         const bigAmount = new BigNumber(rateResult.expectedAmount);
         const decimals = isFrom ? toToken.decimals : fromToken.decimals;
         const expectedAmountUnits = bigAmount.shiftedBy(-decimals);
-        const srcAmountUnits = new BigNumber(srcAmount).shiftedBy(decimals);
+        const srcAmountUnits = new BigNumber(srcAmount).shiftedBy(-decimals);
+        const price = expectedAmountUnits.div(srcAmountUnits).pow(isFrom ? 1 : -1).abs().toString();
+        const price_decimals = isFrom ? -toToken.decimals : fromToken.decimals;
+        const expectedExchangeRate = !price || price === "NaN" ? "0.000" : new BigNumber(price).shiftedBy(price_decimals).toNumber().toFixed(toToken.decimals);
+        const isEnoughToToken = isFrom ? new BigNumber(toToken.address === this._carbAddress ? fromPool.carbAmount : toPool.tokenAmount).lt(new BigNumber(rateResult.expectedAmount).plus(1)) : false;
         return {
             ...rateResult,
-            amountHuman: expectedAmountUnits.toNumber(),
-            expectedExchangeRate: expectedAmountUnits.div(srcAmountUnits).pow(isFrom ? 1 : -1).abs().toString(),
-            isInsufficientReserves: bigAmount.isNaN(),
+            amountHuman: expectedAmountUnits.toNumber().toFixed(decimals),
+            expectedExchangeRate,
+            isInsufficientReserves: (!price || price === "NaN" || bigAmount.isNaN() || isEnoughToToken || (new BigNumber(srcAmount).gt(0) && new BigNumber(expectedExchangeRate).eq(0))) && new BigNumber(srcAmount).gt(0),
+            expectedSlippage: new BigNumber(rateResult.slippage).shiftedBy(-2).toNumber(),
         };
     }
 }
