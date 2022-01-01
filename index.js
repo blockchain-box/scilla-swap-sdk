@@ -76,23 +76,7 @@ module.exports = class SwapDSK {
             toAmount,
             fromPool,
             toPool
-        })
-    }
-
-    calculateTokenToCarbSwap({toToken, tokenAmount, pool}) {
-        return this._swapPriceService.calculateTokenToCarbSwap({toToken, tokenAmount, pool});
-    }
-
-    calculateCarbToTokenSwap({toToken, carbAmount, pool}) {
-        return this._swapPriceService.calculateCarbToTokenSwap({toToken, carbAmount, pool});
-    }
-
-    calculateTokenToCarbRate({toToken, tokenAmount, pool}) {
-        return this._swapPriceService.calculateTokenToCarbRate({toToken, tokenAmount, pool});
-    }
-
-    calculateCarbToTokenRate({toToken, carbAmount, pool}) {
-        return this._swapPriceService.calculateCarbToTokenRate({toToken, carbAmount, pool});
+        });
     }
 
 

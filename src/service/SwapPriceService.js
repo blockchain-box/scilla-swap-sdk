@@ -47,54 +47,106 @@ module.exports = class SwapPriceService {
         }
     }
 
-    calculateCarbToTokenRate({toToken, carbAmount, pool}) {
-        if (toToken.address.toLowerCase() === this._carbAddress.toLowerCase()) {
-            return "1.000";
+    getInputFor(outputAmount, inputReserve, outputReserve) {
+        if (new BigNumber(outputReserve).lte(outputAmount)) {
+            return new BigNumber('NaN');
         }
-        const carbDenom = new BigNumber(10).pow(8);
-        const tokenDenom = new BigNumber(10).pow(toToken.decimals);
-        const totalCarbAmount = (new BigNumber(pool.carbAmount).plus(new BigNumber(carbAmount))).div(carbDenom);
-        const totalTokenAmount = new BigNumber(pool.tokenAmount).div(tokenDenom);
-        return totalCarbAmount.div(totalTokenAmount).toNumber().toFixed(8);
+
+        const numerator = new BigNumber(inputReserve).times(outputAmount);
+        const denominator = new BigNumber(outputReserve).minus(outputAmount);
+        return numerator.dividedToIntegerBy(denominator);
     }
 
-    calculateTokenToCarbRate({toToken, tokenAmount, pool}) {
-        if (toToken.address.toLowerCase() === this._carbAddress.toLowerCase()) {
-            return "1.000";
+    getOutputFor(inputAmount, inputReserve, outputReserve) {
+        const numerator = new BigNumber(inputAmount).times(outputReserve);
+        const denominator = new BigNumber(inputReserve).plus(inputAmount);
+        return numerator.dividedToIntegerBy(denominator);
+    }
+
+    getOutputs(tokenIn, tokenOut, tokenInAmount, fromPool, toPool) {
+        let epsilonOutput; // the zero slippage output
+        let expectedOutput;
+        if (tokenIn.address === this._carbAddress) { // carb => token
+            const {carbAmount, tokenAmount} = toPool;
+            epsilonOutput = new BigNumber(tokenInAmount).multipliedBy(tokenAmount).div(carbAmount).toString();
+            expectedOutput = this.getOutputFor(tokenInAmount, carbAmount, tokenAmount).toString();
+        } else if (tokenOut.address === this._carbAddress) { // token => carb
+            const {carbAmount, tokenAmount} = fromPool;
+            epsilonOutput = new BigNumber(tokenInAmount).multipliedBy(carbAmount).div(tokenAmount).toString();
+            expectedOutput = this.getOutputFor(tokenInAmount, tokenAmount, carbAmount).toString();
+        } else { // token => token
+            const {carbAmount: carb1, tokenAmount: tr1} = fromPool;
+            const intermediateEpsilonOutput = new BigNumber(tokenInAmount).multipliedBy(carb1).div(tr1);
+            const intermediateOutput = this.getOutputFor(tokenInAmount, tr1, carb1);
+
+            const {carbAmount: carb2, tokenAmount: tr2} = toPool;
+            epsilonOutput = intermediateEpsilonOutput.multipliedBy(tr2).div(carb2).toString();
+            expectedOutput = this.getOutputFor(intermediateOutput, carb2, tr2);
         }
-        const carbDenom = new BigNumber(10).pow(8);
-        const tokenDenom = new BigNumber(10).pow(toToken.decimals);
-        const totalCarbAmount = new BigNumber(pool.carbAmount).div(carbDenom);
-        const totalTokenAmount = (new BigNumber(pool.tokenAmount).plus(new BigNumber(tokenAmount))).div(tokenDenom);
-        return totalCarbAmount.div(totalTokenAmount).toNumber().toFixed(parseInt(toToken.decimals));
+
+        return {epsilonOutput, expectedOutput};
     }
 
-    calculateCarbToTokenSwap({toToken, carbAmount, pool}) {
-        return new BigNumber(this.calculateCarbToTokenRate({toToken, carbAmount, pool}))
-            .multipliedBy(carbAmount).toNumber().toFixed(parseInt(toToken.decimals));
+    getInputs(tokenIn, tokenOut, tokenOutAmount, fromPool, toPool) {
+        let expectedInput;
+        let epsilonInput; // the zero slippage input
+
+        if (tokenIn.address === this._carbAddress) { // carb => token
+            const {carbAmount, tokenAmount} = toPool;
+            epsilonInput = new BigNumber(tokenOutAmount).multipliedBy(carbAmount).div(tokenAmount).toString();
+            expectedInput = this.getInputFor(tokenOutAmount, carbAmount, tokenAmount).toString();
+        } else if (tokenOut.address === this._carbAddress) { // token => carb
+            const {carbAmount, tokenAmount} = fromPool;
+            epsilonInput = new BigNumber(tokenOutAmount).multipliedBy(tokenAmount).dividedToIntegerBy(carbAmount).toString();
+            expectedInput = this.getInputFor(tokenOutAmount, tokenAmount, carbAmount).toString();
+        } else { // token => token
+            const {carbAmount: carb1, tokenAmount: tr1} = toPool;
+            const intermediateEpsilonInput = new BigNumber(tokenOutAmount).multipliedBy(carb1).div(tr1);
+            const intermediateInput = this.getInputFor(tokenOutAmount, carb1, tr1);
+
+            const {carbAmount: carb2, tokenAmount: tr2} = fromPool;
+            epsilonInput = intermediateEpsilonInput.multipliedBy(tr2).div(carb2).toString();
+            expectedInput = this.getInputFor(intermediateInput, tr2, carb2).toString();
+        }
+
+        return {epsilonInput, expectedInput};
     }
 
-    calculateTokenToCarbSwap({toToken, tokenAmount, pool}) {
-        return new BigNumber(this.calculateTokenToCarbRate({toToken, tokenAmount, pool}))
-            .multipliedBy(tokenAmount).toNumber().toFixed(8);
+    getRatesForInput(tokenIn, tokenOut, tokenInAmount, fromPool, toPool) {
+        const {epsilonOutput, expectedOutput} = this.getOutputs(tokenIn, tokenOut, tokenInAmount, fromPool, toPool)
+        return {
+            expectedAmount: expectedOutput,
+            slippage: new BigNumber(epsilonOutput).minus(expectedOutput).multipliedBy(100).div(epsilonOutput).toString(),
+        };
     }
+
+    getRatesForOutput(tokenIn, tokenOut, tokenInAmount, fromPool, toPool) {
+        const {epsilonInput, expectedInput} = this.getInputs(tokenIn, tokenOut, tokenInAmount, fromPool, toPool)
+        return {
+            expectedAmount: expectedInput,
+            slippage: new BigNumber(expectedInput).minus(epsilonInput).multipliedBy(100).div(expectedInput).toString(),
+        };
+    }
+
 
     calculateTokenToTokenSwap({isFrom, toToken, fromToken, fromAmount, toAmount, fromPool, toPool}) {
+        const srcAmount = isFrom ? fromAmount : toAmount;
+        let rateResult;
         if (isFrom) {
-            const fromTokenToCarb = this.calculateTokenToCarbSwap({
-                toToken: fromToken,
-                tokenAmount: fromAmount,
-                pool: fromPool
-            });
-            const fromCarbToToken = this.calculateCarbToTokenSwap({toToken, carbAmount: fromTokenToCarb, pool: toPool});
-            return fromCarbToToken;
+            rateResult = this.getRatesForInput(fromToken, toToken, new BigNumber(srcAmount).shiftedBy(fromToken.decimals), fromPool ? fromPool : toPool, toPool ? toPool : fromPool);
+        } else {
+            rateResult = this.getRatesForOutput(fromToken, toToken, new BigNumber(srcAmount).shiftedBy(toToken.decimals), fromPool ? fromPool : toPool, toPool ? toPool : fromPool);
         }
-        const toTokenToCarb = this.calculateTokenToCarbSwap({toToken, tokenAmount: toAmount, pool: toPool});
-        const fromCarbToToken = this.calculateCarbToTokenSwap({
-            toToken: fromToken,
-            carbAmount: toTokenToCarb,
-            pool: fromPool
-        });
-        return fromCarbToToken
+
+        const bigAmount = new BigNumber(rateResult.expectedAmount);
+        const decimals = isFrom ? toToken.decimals : fromToken.decimals;
+        const expectedAmountUnits = bigAmount.shiftedBy(-decimals);
+        const srcAmountUnits = new BigNumber(srcAmount).shiftedBy(decimals);
+        return {
+            ...rateResult,
+            amountHuman: expectedAmountUnits.toNumber(),
+            expectedExchangeRate: expectedAmountUnits.div(srcAmountUnits).pow(isFrom ? 1 : -1).abs().toString(),
+            isInsufficientReserves: bigAmount.isNaN(),
+        };
     }
 }
