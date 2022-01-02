@@ -210,8 +210,8 @@ module.exports = class SwapService {
         const blockNum = await this.getBlockNumber();
         const deadlineBlock = blockNum + this._deadline_block;
 
-        const min = new BigNumber(toAmount).multipliedBy(slippage);
-        const minToTokenAmount = new BigNumber(toAmount).minus(min).toString();
+        const min = new BigNumber(toAmount).shiftedBy(-toToken.decimals).multipliedBy(slippage);
+        const minToTokenAmount = new BigNumber(toAmount).shiftedBy(-toToken.decimals).minus(min).shiftedBy(toToken.decimals).toString().split(".")[0];
         if (fromToken.address === this._carbAddress) {
             params = transitions.SwapExactCarbForTokens({
                 amount: fromAmount,
@@ -227,7 +227,7 @@ module.exports = class SwapService {
             params = transitions.SwapExactTokensForCarb({
                 token_address: fromToken.address,
                 min_carb_amount: minToTokenAmount,
-                token_amount: fromToken,
+                token_amount: fromAmount,
                 recipient_address: recipientAddress,
                 deadline_block: deadlineBlock,
                 is_transfer: isTransfer,
@@ -250,8 +250,8 @@ module.exports = class SwapService {
                 zilAmount = fromToken.address === zilAddress ? fromAmount : 0;
                 tag = "SwapExactTokensForTokens";
             } else {
-                const min = new BigNumber(fromAmount).multipliedBy(slippage);
-                const maxFromTokenAmount = new BigNumber(fromAmount).plus(min).toString();
+                const min = new BigNumber(fromAmount).shiftedBy(-fromToken.decimals).multipliedBy(slippage);
+                const maxFromTokenAmount = new BigNumber(fromAmount).shiftedBy(-fromAmount.decimals).plus(min).shiftedBy(fromToken.decimals).toString().split(".")[0];
                 params = transitions.SwapTokensForExactTokens({
                     token0_address: fromToken.address,
                     token1_address: toToken.address,
