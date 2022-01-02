@@ -7,9 +7,7 @@ const PoolService = require("./src/service/PoolService");
 const IsTokenUnLockedDTO = require("./src/dto/IsTokenUnLockedDTO");
 const GetPoolsOfAccountDTO = require("./src/dto/GetPoolsOfAccountDTO");
 const GetTokenOfAccountInSwapDTO = require("./src/dto/GetTokenOfAccountInSwapDTO");
-const CalculateSwapResultDTO = require("./src/dto/CalculateSwapResultDTO");
 const SwapPriceService = require("./src/service/SwapPriceService");
-const CalculateSwapParamsDTO = require("./src/dto/CalculateSwapParamsDTO");
 
 module.exports = class SwapDSK {
     constructor({nodeAPI, swapContract, carbContract, graphContract}) {
@@ -59,12 +57,51 @@ module.exports = class SwapDSK {
         return this._swapService.getTokens(req.account);
     }
 
-    async calculateSwapResult(req = new CalculateSwapResultDTO({})) { // SwapResultValue
-        return this._swapService.calculateSwapResult(req);
+
+    async calculateSwapParams(isFrom,
+                              fromToken,
+                              toToken,
+                              fromAmount,
+                              toAmount,
+                              avatar = "empty",
+                              isTransfer,
+                              recipientAddress,
+                              slippage,
+                              blocks,) {
+        return this._swapService.getSwapTokenToTokenCall({
+            isFrom,
+            fromToken,
+            toToken,
+            fromAmount,
+            toAmount,
+            avatar,
+            isTransfer,
+            recipientAddress,
+            slippage,
+            blocks,
+        });
     }
 
-    async calculateSwapParams(req = new CalculateSwapParamsDTO({})) {
-        return this._swapService.getSwapTokenToTokenCall(req);
+    async calculateAddLiquidityParams({carbAmount, tokenAddress, blocks, maxTokenAmount, minCarbAmount}) {
+        return this._swapService.getAddLiquidityCall({carbAmount, tokenAddress, blocks, maxTokenAmount, minCarbAmount})
+    }
+
+    async calculateRemoveLiquidityParams({
+                                             minCarbAmount,
+                                             blocks,
+                                             tokenAddress,
+                                             carbAmount,
+                                             contributionAmount,
+                                             minTokenAmount,
+                                         }) {
+        return this._swapService.getRemoveLiquidityCall({
+            minCarbAmount,
+            blocks,
+            tokenAddress,
+            carbAmount,
+            contributionAmount,
+            minTokenAmount,
+        });
     }
 
     calculateSwapTokens({
@@ -91,6 +128,15 @@ module.exports = class SwapDSK {
             graphToken,
             graphPool
         });
+    }
+
+    async getFeesAndRewardsBalances(account) {
+        const carbBalance = await this._swapService.getCarbBalance(account);
+        const graphBalance = await this._swapService.getGraphBalance(account);
+        return {
+            carbBalance,
+            graphBalance
+        };
     }
 
 };

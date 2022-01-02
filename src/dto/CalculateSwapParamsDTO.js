@@ -1,5 +1,6 @@
 module.exports = class CalculateSwapParamsDTO {
     constructor({
+        isFrom,
                     account,
                     fromAddress,
                     isMax,
@@ -12,6 +13,7 @@ module.exports = class CalculateSwapParamsDTO {
                     slippage,
                     blocks,
                 }) {
+        this.isFrom = isFrom;
         this.account = account;
         this.isMax = isMax;
         this.fromAddress = fromAddress;
