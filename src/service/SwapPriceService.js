@@ -131,7 +131,7 @@ module.exports = class SwapPriceService {
 
 
     getSwapFees(fromToken, toToken, amount, pool) {
-        const fees = 0.025;
+        const fees = 0.0025;
         if (fromToken.address === this._carbAddress.toLowerCase()) {
             return parseFloat(amount) * fees;
         }
@@ -145,7 +145,18 @@ module.exports = class SwapPriceService {
     }
 
 
-    calculateTokenToTokenSwap({isFrom, toToken, fromToken, fromAmount, toAmount, fromPool, toPool, carbToken, graphToken, graphPool}) {
+    calculateTokenToTokenSwap({
+                                  isFrom,
+                                  toToken,
+                                  fromToken,
+                                  fromAmount,
+                                  toAmount,
+                                  fromPool,
+                                  toPool,
+                                  carbToken,
+                                  graphToken,
+                                  graphPool
+                              }) {
         const srcAmount = isFrom ? fromAmount : toAmount;
         let rateResult;
         if (isFrom) {
