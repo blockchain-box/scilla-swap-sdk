@@ -58,16 +58,18 @@ module.exports = class SwapDSK {
     }
 
 
-    async calculateSwapParams(isFrom,
-                              fromToken,
-                              toToken,
-                              fromAmount,
-                              toAmount,
-                              avatar = "empty",
-                              isTransfer,
-                              recipientAddress,
-                              slippage,
-                              blocks,) {
+    async calculateSwapParams({
+                                  isFrom,
+                                  fromToken,
+                                  toToken,
+                                  fromAmount,
+                                  toAmount,
+                                  avatar = "empty",
+                                  isTransfer,
+                                  recipientAddress,
+                                  slippage,
+                                  blocks
+                              }) {
         return this._swapService.getSwapTokenToTokenCall({
             isFrom,
             fromToken,
