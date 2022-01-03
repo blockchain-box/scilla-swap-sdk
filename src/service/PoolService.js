@@ -10,6 +10,9 @@ const mapTokenToLogo = require("../share/mapTokenToLogo");
 const PoolValue = require("../value/PoolValue");
 const TokenValue = require("../value/TokenValue");
 const Token = require("../model/Token");
+const BigNumber = require("bignumber.js");
+
+const frac = (d, x, y) => new BigNumber(d).multipliedBy(y).div(x).toString().split(".")[0];
 
 module.exports = class PoolService {
     constructor({
@@ -30,6 +33,16 @@ module.exports = class PoolService {
         this._tokenRepository = tokenRepository;
         this._balanceRepository = balanceRepository;
         this._carbAddress = carbAddress;
+    }
+
+    calculateShare({pool, contribution_amount, total_contribution, tokenDecimals}) {
+        const {x, y} = pool;
+        const carb_amount = frac(contribution_amount, total_contribution, x);
+        const token_amount = frac(contribution_amount, total_contribution, y);
+        return {
+            carb: new BigNumber(carb_amount).shiftedBy(-8).toString(),
+            token: new BigNumber(token_amount).shiftedBy(-tokenDecimals).toString()
+        };
     }
 
     async getSwapPools() {
@@ -83,6 +96,12 @@ module.exports = class PoolService {
                 if (!lpBalance) {
                     return null;
                 }
+                const share = this.calculateShare({
+                    pool: {x: pool.carbAmount, y: pool.tokenAmount},
+                    contribution_amount: lpBalance,
+                    total_contribution: pool.totalContribution,
+                    tokenDecimals: pool.token.decimals,
+                });
                 return new PoolAccountValue({
                     account: forAddress,
                     token: new TokenAccountValue({
@@ -101,6 +120,7 @@ module.exports = class PoolService {
                         tokenAddress: pool.token.address,
                         swapAddress: this._address
                     }),
+                    share,
                     totalContribution: pool.totalContribution,
                     tokenBalance: await this._balanceRepository.getBalanceOfToken(forAddress, pool.token.address),
                     priceUSD: await this._tokenRepository.getPriceOfTokenUSD("carb"),

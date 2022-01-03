@@ -10,6 +10,7 @@ module.exports = class PoolAccountValue {
                     tokenAmount,
                     priceUSD,
                     carbLogo,
+        share,
                 }) {
         this.account = account;
         this.lpBalance = lpBalance;
@@ -19,6 +20,7 @@ module.exports = class PoolAccountValue {
         this.tokenAmount = tokenAmount;
         this.priceUSD = priceUSD;
         this.carbLogo = carbLogo;
+        this.share = share;
 
         this.showCarbAmount = new BigNumber(lpBalance).div(new BigNumber(10).pow(8)).toNumber();
         const total = new BigNumber(carbAmount);
