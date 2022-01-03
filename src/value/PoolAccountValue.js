@@ -22,10 +22,10 @@ module.exports = class PoolAccountValue {
         this.carbLogo = carbLogo;
         this.share = share;
 
-        this.showCarbAmount = new BigNumber(lpBalance).div(new BigNumber(10).pow(8)).toNumber();
+        this.showCarbAmount = new BigNumber(share.carb).toNumber();
         const total = new BigNumber(carbAmount);
         const lpShowBalance = new BigNumber(lpBalance).div(new BigNumber(10).pow(8));
-        this.showTokenAmount = new BigNumber(lpShowBalance).div(total).multipliedBy(tokenAmount).toNumber();
+        this.showTokenAmount = new BigNumber(share.token);
         const tokenUSD = new BigNumber(this.showTokenAmount).multipliedBy(new BigNumber(token.priceUSD));
         const carbUSD = new BigNumber(this.showCarbAmount).multipliedBy(new BigNumber(priceUSD));
         this.usdShowAmount = tokenUSD.plus(carbUSD).toNumber();
