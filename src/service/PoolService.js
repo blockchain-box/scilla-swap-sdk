@@ -34,6 +34,7 @@ module.exports = class PoolService {
 
     async getSwapPools() {
         const state = await this._fetcher.getSubState(fields.pools.pools);
+        const totalContributionState = await this._fetcher.getSubState(fields.total_contributions.total_contributions);
         if (state) {
             const pools = state[fields.pools.pools];
             const tokenAddress = Object.keys(pools);
@@ -52,6 +53,7 @@ module.exports = class PoolService {
                         tokenAmount: pools[token.address].arguments[1]
                     }, this._carbAddress)
                 }),
+                totalContribution: totalContributionState[fields.total_contributions.total_contributions][token.address.toLowerCase()],
                 tokenAmount: pools[token.address].arguments[1],
                 carbAmount: pools[token.address].arguments[0],
                 carbLogo: mapTokenToLogo(new Token({address: this._carbAddress})),
@@ -99,6 +101,7 @@ module.exports = class PoolService {
                         tokenAddress: pool.token.address,
                         swapAddress: this._address
                     }),
+                    totalContribution: pool.totalContribution,
                     tokenBalance: await this._balanceRepository.getBalanceOfToken(forAddress, pool.token.address),
                     priceUSD: await this._tokenRepository.getPriceOfTokenUSD("carb"),
                     carbAmount: pool.carbAmount,

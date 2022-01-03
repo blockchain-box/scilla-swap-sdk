@@ -12,11 +12,13 @@ module.exports = class PoolRepository {
     async findPool({token = new Token({}), swapAddress}) {
         const swapContract = this._zilliqa.contracts.at(swapAddress);
         const swapState = await swapContract.getSubState(fields.pools.pools, [token.address.toLowerCase()]);
+        const totalContributionState = await swapContract.getSubState(fields.total_contributions.total_contributions, [token.address.toLowerCase()]);
         if (swapState) {
             const pool = swapState[fields.pools.pools][token.address.toLowerCase()];
             const denomToken = new BigNumber(10).pow(token.decimals);
             const denomCarb = new BigNumber(10).pow(8);
             return new Pool({
+                totalContribution: totalContributionState[fields.total_contributions.total_contributions][token.address.toLowerCase()],
                 carbAmount: new BigNumber(pool.arguments[0]).div(denomCarb).toNumber(),
                 tokenAmount: new BigNumber(pool.arguments[1]).div(denomToken).toNumber(),
                 token
