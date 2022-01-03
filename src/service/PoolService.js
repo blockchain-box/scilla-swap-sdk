@@ -96,11 +96,15 @@ module.exports = class PoolService {
                 if (!lpBalance) {
                     return null;
                 }
+                const tokenDecimals = pool.token.decimals;
                 const share = this.calculateShare({
-                    pool: {x: pool.carbAmount, y: pool.tokenAmount},
+                    pool: {
+                        x: new BigNumber(pool.carbAmount).shiftedBy(8).toString(),
+                        y: new BigNumber(pool.tokenAmount).shiftedBy(tokenDecimals)
+                    },
                     contribution_amount: lpBalance,
                     total_contribution: pool.totalContribution,
-                    tokenDecimals: pool.token.decimals,
+                    tokenDecimals,
                 });
                 return new PoolAccountValue({
                     account: forAddress,
