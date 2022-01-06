@@ -75,6 +75,23 @@ module.exports = class PoolService {
         return [];
     }
 
+    async getTokenOfAccount({account, tokenAddress}) {
+        const token = await this._tokenRepository.findToken(tokenAddress);
+        return {
+            balance: await this._balanceRepository.getBalanceOfToken(account, tokenAddress),
+            logo: mapTokenToLogo(token),
+            token,
+        };
+    }
+
+    async getToken(tokenAddress) {
+        const token = await this._tokenRepository.findToken(tokenAddress);
+        return {
+            logo: mapTokenToLogo(token),
+            token,
+        };
+    }
+
     async getPoolsOfAccount(forAddress) {
         if (!forAddress) {
             return [];

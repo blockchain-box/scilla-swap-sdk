@@ -141,4 +141,12 @@ module.exports = class SwapDSK {
         };
     }
 
+    async getTokenOfAccount({account, tokenAddress}) {
+        return this._poolService.getTokenOfAccount({account, tokenAddress});
+    }
+
+    async getToken(tokenAddress) {
+        return this._poolService.getToken(tokenAddress);
+    }
+
 };
