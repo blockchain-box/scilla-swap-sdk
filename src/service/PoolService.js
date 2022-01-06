@@ -77,10 +77,20 @@ module.exports = class PoolService {
 
     async getTokenOfAccount({account, tokenAddress}) {
         const token = await this._tokenRepository.findToken(tokenAddress);
+        const balance = await this._balanceRepository.getBalanceOfToken(account, tokenAddress);
         return {
-            balance: await this._balanceRepository.getBalanceOfToken(account, tokenAddress),
+            balance,
             logo: mapTokenToLogo(token),
-            token,
+            token: new TokenAccountValue({
+                address: token.address,
+                name: token.name,
+                decimals: token.decimals,
+                balance,
+                logo: mapTokenToLogo(token),
+                priceUSD: await this._tokenRepository.getPriceOfTokenUSD(token.symbol),
+                priceZIL: await this._tokenRepository.getPriceOfTokenInZil(token.symbol),
+                symbol: token.symbol,
+            }),
         };
     }
 
@@ -88,7 +98,15 @@ module.exports = class PoolService {
         const token = await this._tokenRepository.findToken(tokenAddress);
         return {
             logo: mapTokenToLogo(token),
-            token,
+            token: new TokenValue({
+                address: token.address,
+                name: token.name,
+                decimals: token.decimals,
+                logo: mapTokenToLogo(token),
+                priceUSD: await this._tokenRepository.getPriceOfTokenUSD(token.symbol),
+                priceZIL: await this._tokenRepository.getPriceOfTokenInZil(token.symbol),
+                symbol: token.symbol,
+            }),
         };
     }
 

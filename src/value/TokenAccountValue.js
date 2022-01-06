@@ -1,5 +1,5 @@
 module.exports = class TokenAccountValue {
-    constructor({address, name, symbol, logo, balance, totalContribution, priceUSD, priceZIL, priceCarb, decimals}) {
+    constructor({address, name, symbol, logo, balance, priceUSD, priceZIL, decimals}) {
         this.address = address;
         this.name = symbol;
         this.logo = logo;
@@ -9,7 +9,5 @@ module.exports = class TokenAccountValue {
         this.name = name;
         this.symbol = symbol;
         this.decimals = decimals;
-        this.priceCarb = priceCarb;
-        this.totalContribution = totalContribution;
     }
 }
