@@ -68,19 +68,19 @@ module.exports = class SwapPriceService {
         let epsilonOutput; // the zero slippage output
         let expectedOutput;
         if (tokenIn.address === this._carbAddress) { // carb => token
-            const {carbAmount, tokenAmount} = toPool;
-            epsilonOutput = new BigNumber(tokenInAmount).multipliedBy(tokenAmount).div(carbAmount).toString();
-            expectedOutput = this.getOutputFor(tokenInAmount, carbAmount, tokenAmount).toString();
+            const {x, y} = toPool;
+            epsilonOutput = new BigNumber(tokenInAmount).multipliedBy(y).div(x).toString();
+            expectedOutput = this.getOutputFor(tokenInAmount, x, y).toString();
         } else if (tokenOut.address === this._carbAddress) { // token => carb
-            const {carbAmount, tokenAmount} = fromPool;
-            epsilonOutput = new BigNumber(tokenInAmount).multipliedBy(carbAmount).div(tokenAmount).toString();
-            expectedOutput = this.getOutputFor(tokenInAmount, tokenAmount, carbAmount).toString();
+            const {x, y} = fromPool;
+            epsilonOutput = new BigNumber(tokenInAmount).multipliedBy(x).div(y).toString();
+            expectedOutput = this.getOutputFor(tokenInAmount, y, x).toString();
         } else { // token => token
-            const {carbAmount: carb1, tokenAmount: tr1} = fromPool;
+            const {x: carb1, y: tr1} = fromPool;
             const intermediateEpsilonOutput = new BigNumber(tokenInAmount).multipliedBy(carb1).div(tr1);
             const intermediateOutput = this.getOutputFor(tokenInAmount, tr1, carb1);
 
-            const {carbAmount: carb2, tokenAmount: tr2} = toPool;
+            const {x: carb2, y: tr2} = toPool;
             epsilonOutput = intermediateEpsilonOutput.multipliedBy(tr2).div(carb2).toString();
             expectedOutput = this.getOutputFor(intermediateOutput, carb2, tr2);
         }
@@ -93,19 +93,19 @@ module.exports = class SwapPriceService {
         let epsilonInput; // the zero slippage input
 
         if (tokenIn.address === this._carbAddress) { // carb => token
-            const {carbAmount, tokenAmount} = toPool;
-            epsilonInput = new BigNumber(tokenOutAmount).multipliedBy(carbAmount).div(tokenAmount).toString();
-            expectedInput = this.getInputFor(tokenOutAmount, carbAmount, tokenAmount).toString();
+            const {x, y} = toPool;
+            epsilonInput = new BigNumber(tokenOutAmount).multipliedBy(x).div(y).toString();
+            expectedInput = this.getInputFor(tokenOutAmount, x, y).toString();
         } else if (tokenOut.address === this._carbAddress) { // token => carb
-            const {carbAmount, tokenAmount} = fromPool;
-            epsilonInput = new BigNumber(tokenOutAmount).multipliedBy(tokenAmount).dividedToIntegerBy(carbAmount).toString();
-            expectedInput = this.getInputFor(tokenOutAmount, tokenAmount, carbAmount).toString();
+            const {x, y} = fromPool;
+            epsilonInput = new BigNumber(tokenOutAmount).multipliedBy(y).dividedToIntegerBy(x).toString();
+            expectedInput = this.getInputFor(tokenOutAmount, y, x).toString();
         } else { // token => token
-            const {carbAmount: carb1, tokenAmount: tr1} = toPool;
+            const {x: carb1, y: tr1} = toPool;
             const intermediateEpsilonInput = new BigNumber(tokenOutAmount).multipliedBy(carb1).div(tr1);
             const intermediateInput = this.getInputFor(tokenOutAmount, carb1, tr1);
 
-            const {carbAmount: carb2, tokenAmount: tr2} = fromPool;
+            const {x: carb2, y: tr2} = fromPool;
             epsilonInput = intermediateEpsilonInput.multipliedBy(tr2).div(carb2).toString();
             expectedInput = this.getInputFor(intermediateInput, tr2, carb2).toString();
         }
@@ -174,8 +174,10 @@ module.exports = class SwapPriceService {
         const expectedExchangeRate = !price || price === "NaN" ? "0.000" : new BigNumber(price).shiftedBy(price_decimals).toNumber().toFixed(toToken.decimals);
         const isEnoughToToken = isFrom ? new BigNumber(toToken.address === this._carbAddress ? fromPool.carbAmount : toPool.tokenAmount).lt(new BigNumber(rateResult.expectedAmount).plus(1)) : false;
 
-        const swapFees = this.getSwapFees(fromToken, carbToken, srcAmount, fromPool ? fromPool : toPool);
-        const swapRewards = this.getSwapRewards(carbToken, graphToken, graphPool, swapFees);
+        const isFromZilToCarb = fromToken.symbol.toLowerCase() === "zil" && toToken.symbol.toLowerCase() === "carb";
+
+        const swapFees = isFromZilToCarb ? "0.000" : this.getSwapFees(fromToken, carbToken, srcAmount, fromPool ? fromPool : toPool);
+        const swapRewards = isFromZilToCarb ? "0.000" : this.getSwapRewards(carbToken, graphToken, graphPool, swapFees);
 
         return {
             ...rateResult,
