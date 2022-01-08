@@ -16,6 +16,10 @@ module.exports = class SwapPriceService {
         this._poolRepository = poolRepository;
     }
 
+    priceOfTokenInCarbWithPool({token, pool}) {
+        return this._tokenRepository.priceOfTokenInCarbWithPool(token, pool, this._carbAddress);
+    }
+
     async priceOfTokenInCarb(tokenAddress) {
         if (this._carbAddress.toLowerCase() === tokenAddress.toLowerCase()) {
             throw new Error("not allowed to find price of carb in carb");

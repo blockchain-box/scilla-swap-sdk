@@ -149,4 +149,11 @@ module.exports = class SwapDSK {
         return this._poolService.getToken(tokenAddress);
     }
 
+    priceOfTokenInCarbWithPool({token, pool}) {
+        return this._swapPriceService.priceOfTokenInCarbWithPool({
+            token,
+            pool: {carbAmount: pool.x, tokenAmount: pool.y}
+        });
+    }
+
 };
