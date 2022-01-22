@@ -27,20 +27,24 @@ module.exports = class TokenRepository {
     }
 
     async getPriceOfTokenUSD(symbol) {
-        const url = this.getUrlOfTokenPrice({symbol});
-        const data = (await axios.get(url)).data;
-        if (data) {
-            return symbol.toLowerCase() === "zil" ? data.rate : data.rate_usd;
-        }
+        try {
+            const url = this.getUrlOfTokenPrice({symbol});
+            const data = (await axios.get(url)).data;
+            if (data) {
+                return symbol.toLowerCase() === "zil" ? data.rate : data.rate_usd;
+            }
+        } catch (e) {}
         return 0;
     }
 
     async getPriceOfTokenInZil(symbol) {
-        const url = this.getUrlOfTokenPrice({symbol});
-        const data = (await axios.get(url)).data;
-        if (data) {
-            return data.rate;
-        }
+        try {
+            const url = this.getUrlOfTokenPrice({symbol});
+            const data = (await axios.get(url)).data;
+            if (data) {
+                return data.rate;
+            }
+        } catch (e) {}
         return 0;
     }
 
