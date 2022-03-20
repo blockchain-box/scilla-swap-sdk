@@ -31,7 +31,7 @@ module.exports = class TokenRepository {
             const url = this.getUrlOfTokenPrice({symbol});
             const data = (await axios.get(url)).data;
             if (data) {
-                return symbol.toLowerCase() === "zil" ? data.rate : data.rate_usd;
+                return symbol.toLowerCase() === "zil" ? (await axios.get("https://api.coingecko.com/api/v3/simple/price?ids=zilliqa&vs_currencies=usd")).data.zilliqa.usd : data.rate_usd;
             }
         } catch (e) {}
         return 0;
