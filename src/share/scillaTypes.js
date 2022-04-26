@@ -8,17 +8,17 @@ const base16Address = (address) => {
 
 
 module.exports = {
-    Uint32: (name, value = BigInt(0)) => ({
+    Uint32: (name, value = 0) => ({
         vname: name.trim(),
         type: "Uint32",
         value: value.toString().trim().split(".")[0]
     }),
-    Uint128: (name, value = BigInt(0)) => ({
+    Uint128: (name, value = 0) => ({
         vname: name.trim(),
         type: "Uint128",
         value: value.toString().trim().split(".")[0]
     }),
-    Uint256: (name, value = BigInt(0)) => ({
+    Uint256: (name, value = 0) => ({
         vname: name.trim(),
         type: "Uint128",
         value: value.toString().trim().split(".")[0]

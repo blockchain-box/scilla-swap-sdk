@@ -1,1 +1,2 @@
-module.exports = (number, decimal) => (parseFloat((BigInt(number) / BigInt(10 ** parseInt(decimal))).toString())).toFixed(parseInt(decimal));
+const BigNumber = require("bignumber.js");
+module.exports = (number, decimal) => new BigNumber(number).shiftedBy(-parseInt(decimal)).toString();

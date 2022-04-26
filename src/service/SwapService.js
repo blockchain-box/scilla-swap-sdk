@@ -280,7 +280,7 @@ module.exports = class SwapService {
         const fetcher = this._zilliqa.contracts.at(tokenAddress);
         const state = await fetcher.getSubState("allowances", [account.toLowerCase()]);
         if (state && state["allowances"][account.toLowerCase()][this._address.toLowerCase()]) {
-            return BigInt(state["allowances"][account.toLowerCase()][this._address.toLowerCase()]) >= BigInt(amount ? amount : 0);
+            return new BigNumber(state["allowances"][account.toLowerCase()][this._address.toLowerCase()]).gte(amount ? amount : 0);
         }
         return false;
     }
