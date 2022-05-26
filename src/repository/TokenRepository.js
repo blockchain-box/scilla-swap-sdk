@@ -12,7 +12,7 @@ module.exports = class TokenRepository {
     }
 
     getUrlOfTokenPrice(token) {
-        return ("https://api.zilstream.com/tokens/") + (mapTestSymbols[token.symbol.toLowerCase()] ? mapTestSymbols[token.symbol.toLowerCase()] : token.symbol.toLowerCase())
+        return ("https://io.zilstream.com/tokens/") + (mapTestSymbols[token.symbol.toLowerCase()] ? mapTestSymbols[token.symbol.toLowerCase()] : token.symbol.toLowerCase())
     }
 
     priceOfTokenInCarbWithPool(token, pool, carbAddress) {
