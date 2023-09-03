@@ -9,8 +9,8 @@ module.exports = class PoolAccountValue {
                     carbAmount,
                     tokenAmount,
                     priceUSD,
-                    carbLogo,
-        share,
+                    grphLogo,
+                    share,
                 }) {
         this.account = account;
         this.lpBalance = lpBalance;
@@ -19,15 +19,15 @@ module.exports = class PoolAccountValue {
         this.carbAmount = carbAmount;
         this.tokenAmount = tokenAmount;
         this.priceUSD = priceUSD;
-        this.carbLogo = carbLogo;
+        this.grphLogo = grphLogo;
         this.share = share;
 
-        this.showCarbAmount = new BigNumber(share.carb).toNumber();
+        this.showGrphAmount = new BigNumber(share.grph).toNumber();
         const total = new BigNumber(carbAmount);
         const lpShowBalance = new BigNumber(lpBalance).div(new BigNumber(10).pow(8));
         this.showTokenAmount = new BigNumber(share.token);
         const tokenUSD = new BigNumber(this.showTokenAmount).multipliedBy(new BigNumber(token.priceUSD));
-        const carbUSD = new BigNumber(this.showCarbAmount).multipliedBy(new BigNumber(priceUSD));
-        this.usdShowAmount = tokenUSD.plus(carbUSD).toNumber();
+        const grphUSD = new BigNumber(this.showGrphAmount).multipliedBy(new BigNumber(priceUSD));
+        this.usdShowAmount = tokenUSD.plus(grphUSD).toNumber();
     }
 }

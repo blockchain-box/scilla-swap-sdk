@@ -127,7 +127,7 @@ module.exports = class SwapService {
                     contractAddress,
                     host,
                     nodeAPI,
-                    carbAddress,
+                    grphAddress,
                     tokenRepository = new TokenRepository({}),
                     balanceRepository = new BalanceRepository({}),
                 }) {
@@ -135,7 +135,7 @@ module.exports = class SwapService {
         this._host = host;
         this._zilliqa = new Zilliqa(nodeAPI);
         this._fetcher = this._zilliqa.contracts.at(contractAddress);
-        this._carbAddress = carbAddress;
+        this._grphAddress = grphAddress;
         this._deadline_block = 10;
         this._tokenRepository = tokenRepository;
         this._balanceRepository = balanceRepository;
@@ -212,7 +212,7 @@ module.exports = class SwapService {
 
         const min = new BigNumber(toAmount).shiftedBy(-toToken.decimals).multipliedBy(slippage);
         const minToTokenAmount = new BigNumber(toAmount).shiftedBy(-toToken.decimals).minus(min).shiftedBy(toToken.decimals).toString().split(".")[0];
-        if (fromToken.address === this._carbAddress) {
+        if (fromToken.address === this._grphAddress) {
             params = transitions.SwapExactCarbForTokens({
                 amount: fromAmount,
                 token_address: toToken.address,
@@ -222,8 +222,8 @@ module.exports = class SwapService {
                 is_transfer: isTransfer,
                 avatar
             });
-            tag = "SwapExactCarbForTokens";
-        } else if (toToken.address === this._carbAddress) {
+            tag = "SwapExactGrphForTokens";
+        } else if (toToken.address === this._grphAddress) {
             params = transitions.SwapExactTokensForCarb({
                 token_address: fromToken.address,
                 min_carb_amount: minToTokenAmount,
@@ -234,7 +234,7 @@ module.exports = class SwapService {
                 avatar,
             });
             zilAmount = fromToken.address === zilAddress ? fromAmount : 0;
-            tag = "SwapExactTokensForCarb";
+            tag = "SwapExactTokensForGrph";
         } else {
             if (isFrom) {
                 params = transitions.SwapExactTokensForTokens({
@@ -289,9 +289,9 @@ module.exports = class SwapService {
         if (!account) {
             return "0.000";
         }
-        const state = await this._fetcher.getSubState(fields.carb_balances.carb_balances, [account.toLowerCase()]);
+        const state = await this._fetcher.getSubState(fields.grph_balances.grph_balances, [account.toLowerCase()]);
         if (state) {
-            return new BigNumber(state[fields.carb_balances.carb_balances][account.toLowerCase()]).shiftedBy(-8).toNumber().toFixed(8);
+            return new BigNumber(state[fields.grph_balances.grph_balances][account.toLowerCase()]).shiftedBy(-8).toNumber().toFixed(8);
         }
         return "0.000";
     }
@@ -300,9 +300,9 @@ module.exports = class SwapService {
         if (!account) {
             return "0.000";
         }
-        const state = await this._fetcher.getSubState(fields.graph_balances.graph_balances, [account.toLowerCase()]);
+        const state = await this._fetcher.getSubState(fields.grph_balances.grph_balances, [account.toLowerCase()]);
         if (state) {
-            return new BigNumber(state[fields.graph_balances.graph_balances][account.toLowerCase()]).shiftedBy(-8).toNumber().toFixed(8);
+            return new BigNumber(state[fields.grph_balances.grph_balances][account.toLowerCase()]).shiftedBy(-8).toNumber().toFixed(8);
         }
         return "0.000";
     }
@@ -324,18 +324,18 @@ module.exports = class SwapService {
                 priceCarb: this._tokenRepository.priceOfTokenInCarbWithPool(token, {
                     carbAmount: pools[token.address].arguments[0],
                     tokenAmount: pools[token.address].arguments[1]
-                }, this._carbAddress)
+                }, this._grphAddress)
             })));
-            const carbToken = await this._tokenRepository.findToken(this._carbAddress);
+            const grphToken = await this._tokenRepository.findToken(this._grphAddress);
             tokenValues.push(new TokenAccountValue({
-                address: carbToken.address,
-                symbol: carbToken.symbol,
-                name: carbToken.name,
-                balance: forAddress ? await this._balanceRepository.getBalanceOfToken(forAddress, carbToken.address) : 0,
-                priceZIL: await this._tokenRepository.getPriceOfTokenInZil(carbToken.symbol),
-                logo: mapTokenToLogo(carbToken),
-                priceUSD: await this._tokenRepository.getPriceOfTokenUSD(carbToken.symbol),
-                decimals: carbToken.decimals,
+                address: grphToken.address,
+                symbol: grphToken.symbol,
+                name: grphToken.name,
+                balance: forAddress ? await this._balanceRepository.getBalanceOfToken(forAddress, grphToken.address) : 0,
+                priceZIL: await this._tokenRepository.getPriceOfTokenInZil(grphToken.symbol),
+                logo: mapTokenToLogo(grphToken),
+                priceUSD: await this._tokenRepository.getPriceOfTokenUSD(grphToken.symbol),
+                decimals: grphToken.decimals,
                 priceCarb: 1,
             }));
             return tokenValues;

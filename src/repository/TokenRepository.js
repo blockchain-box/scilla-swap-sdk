@@ -21,9 +21,9 @@ module.exports = class TokenRepository {
         }
         const tokenDenom = new BigNumber(10).pow(token.decimals);
         const carbDenom = new BigNumber(10).pow(8);
-        const carbAmount = new BigNumber(pool.carbAmount).div(carbDenom);
+        const grphAmount = new BigNumber(pool.grphAmount).div(carbDenom);
         const tokenAmount = new BigNumber(pool.tokenAmount).div(tokenDenom);
-        return carbAmount.div(tokenAmount).toString();
+        return grphAmount.div(tokenAmount).toString();
     }
 
     async getPriceOfTokenUSD(symbol) {

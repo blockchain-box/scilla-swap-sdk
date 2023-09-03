@@ -10,13 +10,13 @@ const GetTokenOfAccountInSwapDTO = require("./src/dto/GetTokenOfAccountInSwapDTO
 const SwapPriceService = require("./src/service/SwapPriceService");
 
 module.exports = class SwapDSK {
-    constructor({nodeAPI, swapContract, carbContract, graphContract}) {
+    constructor({nodeAPI, swapContract, grphContract}) {
         this._tokenRepo = new TokenRepository({nodeAPI});
         this._poolRepo = new PoolRepository({nodeAPI});
         this._balanceRepo = new BalanceRepository({nodeAPI});
         this._swapPriceService = new SwapPriceService({
             swapAddress: swapContract,
-            carbAddress: carbContract,
+            grphAddress: grphContract,
             tokenRepository: this._tokenRepo,
             poolRepository: this._poolRepo,
         });
@@ -24,8 +24,7 @@ module.exports = class SwapDSK {
             nodeAPI,
             host: "",
             contractAddress: swapContract,
-            graphAddress: graphContract,
-            carbAddress: carbContract,
+            grphAddress: grphContract,
             tokenRepository: this._tokenRepo,
             balanceRepository: this._balanceRepo,
             swapPriceService: this._swapPriceService,
@@ -37,7 +36,7 @@ module.exports = class SwapDSK {
             balanceRepository: this._balanceRepo,
             poolRepository: this._poolRepo,
             tokenRepository: this._tokenRepo,
-            carbAddress: carbContract,
+            grphAddress: grphContract,
         });
     }
 
@@ -114,9 +113,7 @@ module.exports = class SwapDSK {
                             toAmount,
                             fromPool,
                             toPool,
-                            carbToken,
-                            graphToken,
-                            graphPool
+                            grphToken,
                         }) {
         return this._swapPriceService.calculateTokenToTokenSwap({
             isFrom,
@@ -126,9 +123,7 @@ module.exports = class SwapDSK {
             toAmount,
             fromPool,
             toPool,
-            carbToken,
-            graphToken,
-            graphPool
+            grphToken,
         });
     }
 

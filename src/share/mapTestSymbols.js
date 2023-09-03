@@ -1,4 +1,4 @@
 module.exports = {
-    "spd": "CARB", // graph => carb
+    "spd": "CARB", // grph => carb
     "zusd": "zusdt"
 };

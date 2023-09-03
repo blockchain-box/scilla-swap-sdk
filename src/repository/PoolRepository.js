@@ -16,10 +16,10 @@ module.exports = class PoolRepository {
         if (swapState) {
             const pool = swapState[fields.pools.pools][token.address.toLowerCase()];
             const denomToken = new BigNumber(10).pow(token.decimals);
-            const denomCarb = new BigNumber(10).pow(8);
+            const denomGrph = new BigNumber(10).pow(8);
             return new Pool({
                 totalContribution: totalContributionState[fields.total_contributions.total_contributions][token.address.toLowerCase()],
-                carbAmount: new BigNumber(pool.arguments[0]).div(denomCarb).toNumber(),
+                grphAmount: new BigNumber(pool.arguments[0]).div(denomGrph).toNumber(),
                 tokenAmount: new BigNumber(pool.arguments[1]).div(denomToken).toNumber(),
                 token
             });

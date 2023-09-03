@@ -22,7 +22,7 @@ module.exports = class PoolService {
                     poolRepository = new PoolRepository({}),
                     tokenRepository = new TokenRepository({}),
                     balanceRepository = new BalanceRepository({}),
-                    carbAddress,
+                    grphAddress,
                 }) {
         this._address = contractAddress;
         this._host = host;
@@ -32,7 +32,7 @@ module.exports = class PoolService {
         this._poolRepository = poolRepository;
         this._tokenRepository = tokenRepository;
         this._balanceRepository = balanceRepository;
-        this._carbAddress = carbAddress;
+        this._grphAddress = grphAddress;
     }
 
     calculateShare({pool, contribution_amount, total_contribution, tokenDecimals}) {
@@ -61,15 +61,15 @@ module.exports = class PoolService {
                     logo: mapTokenToLogo(token),
                     priceUSD: await this._tokenRepository.getPriceOfTokenUSD(token.symbol),
                     decimals: token.decimals,
-                    priceCarb: this._tokenRepository.priceOfTokenInCarbWithPool(token, {
+                    priceGrph: this._tokenRepository.priceOfTokenInCarbWithPool(token, {
                         carbAmount: pools[token.address].arguments[0],
                         tokenAmount: pools[token.address].arguments[1]
-                    }, this._carbAddress)
+                    }, this._grphAddress)
                 }),
                 totalContribution: totalContributionState[fields.total_contributions.total_contributions][token.address.toLowerCase()],
                 tokenAmount: pools[token.address].arguments[1],
                 carbAmount: pools[token.address].arguments[0],
-                carbLogo: mapTokenToLogo(new Token({address: this._carbAddress})),
+                grphLogo: mapTokenToLogo(new Token({address: this._grphAddress})),
             })));
         }
         return [];
@@ -134,7 +134,7 @@ module.exports = class PoolService {
                 const tokenDecimals = pool.token.decimals;
                 const share = this.calculateShare({
                     pool: {
-                        x: new BigNumber(pool.carbAmount).shiftedBy(8).toString(),
+                        x: new BigNumber(pool.grphAmount).shiftedBy(8).toString(),
                         y: new BigNumber(pool.tokenAmount).shiftedBy(tokenDecimals)
                     },
                     contribution_amount: lpBalance,
@@ -152,7 +152,7 @@ module.exports = class PoolService {
                         symbol: pool.token.symbol,
                         name: pool.token.name,
                         decimals: pool.token.decimals,
-                        priceCarb: this._tokenRepository.priceOfTokenInCarbWithPool(pool.token, pool, this._carbAddress)
+                        priceGrph: this._tokenRepository.priceOfTokenInCarbWithPool(pool.token, pool, this._grphAddress)
                     }),
                     lpBalance,
                     totalBalance: await this._poolRepository.getTotalBalance({
@@ -165,7 +165,7 @@ module.exports = class PoolService {
                     priceUSD: await this._tokenRepository.getPriceOfTokenUSD("carb"),
                     carbAmount: pool.carbAmount,
                     tokenAmount: pool.tokenAmount,
-                    carbLogo: mapTokenToLogo(new Token({address: this._carbAddress})),
+                    grphLogo: mapTokenToLogo(new Token({address: this._grphAddress})),
                 });
             }));
             return allPools.filter(pool => pool !== null);

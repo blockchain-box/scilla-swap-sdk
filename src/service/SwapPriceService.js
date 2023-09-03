@@ -7,29 +7,29 @@ module.exports = class SwapPriceService {
     constructor({
                     poolRepository = new PoolRepository({}),
                     tokenRepository = new TokenRepository({}),
-                    carbAddress,
+                    grphAddress,
                     swapAddress
                 }) {
-        this._carbAddress = carbAddress;
+        this._grphAddress = grphAddress;
         this._swapAddress = swapAddress;
         this._tokenRepository = tokenRepository;
         this._poolRepository = poolRepository;
     }
 
-    priceOfTokenInCarbWithPool({token, pool}) {
-        return this._tokenRepository.priceOfTokenInCarbWithPool(token, pool, this._carbAddress);
+    priceOfTokenInGrphWithPool({token, pool}) {
+        return this._tokenRepository.priceOfTokenInCarbWithPool(token, pool, this._grphAddress);
     }
 
-    async priceOfTokenInCarb(tokenAddress) {
-        if (this._carbAddress.toLowerCase() === tokenAddress.toLowerCase()) {
-            throw new Error("not allowed to find price of carb in carb");
+    async priceOfTokenInGrph(tokenAddress) {
+        if (this._grphAddress.toLowerCase() === tokenAddress.toLowerCase()) {
+            throw new Error("not allowed to find price of grph in grph");
         }
         const token = await this._tokenRepository.findToken(tokenAddress);
         const pool = await this._poolRepository.findPool({token, swapAddress: this._swapAddress});
         if (!pool) {
             throw new Error("no pool found for address: " + tokenAddress);
         }
-        return this._tokenRepository.priceOfTokenInCarbWithPool(token, pool, this._carbAddress);
+        return this._tokenRepository.priceOfTokenInCarbWithPool(token, pool, this._grphAddress);
     }
 
     async priceOfTokenInOtherToken(fromAddress, toAddress) {
@@ -39,15 +39,15 @@ module.exports = class SwapPriceService {
             return parseFloat((1).toFixed(fromToken.decimals));
         }
 
-        if (fromAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
-            const tokenPrice = await this.priceOfTokenInCarb(toAddress);
+        if (fromAddress.toLowerCase() === this._grphAddress.toLowerCase()) {
+            const tokenPrice = await this.priceOfTokenInGrph(toAddress);
             return parseFloat((1 / parseFloat(tokenPrice)).toFixed(fromToken.decimals));
-        } else if (toAddress.toLowerCase() === this._carbAddress.toLowerCase()) {
-            const price = await this.priceOfTokenInCarb(fromAddress);
+        } else if (toAddress.toLowerCase() === this._grphAddress.toLowerCase()) {
+            const price = await this.priceOfTokenInGrph(fromAddress);
             return parseFloat(parseFloat(price).toFixed(fromToken.decimals));
         } else {
-            const rate_token1 = await this.priceOfTokenInCarb(fromAddress);
-            const rate_token2 = await this.priceOfTokenInCarb(toAddress);
+            const rate_token1 = await this.priceOfTokenInGrph(fromAddress);
+            const rate_token2 = await this.priceOfTokenInGrph(toAddress);
             return parseFloat((parseFloat(rate_token1) / parseFloat(rate_token2)).toFixed(fromToken.decimals));
         }
     }
@@ -71,11 +71,11 @@ module.exports = class SwapPriceService {
     getOutputs(tokenIn, tokenOut, tokenInAmount, fromPool, toPool) {
         let epsilonOutput; // the zero slippage output
         let expectedOutput;
-        if (tokenIn.address === this._carbAddress) { // carb => token
+        if (tokenIn.address === this._grphAddress) { // carb => token
             const {x, y} = toPool;
             epsilonOutput = new BigNumber(tokenInAmount).multipliedBy(y).div(x).toString();
             expectedOutput = this.getOutputFor(tokenInAmount, x, y).toString();
-        } else if (tokenOut.address === this._carbAddress) { // token => carb
+        } else if (tokenOut.address === this._grphAddress) { // token => grph
             const {x, y} = fromPool;
             epsilonOutput = new BigNumber(tokenInAmount).multipliedBy(x).div(y).toString();
             expectedOutput = this.getOutputFor(tokenInAmount, y, x).toString();
@@ -96,11 +96,11 @@ module.exports = class SwapPriceService {
         let expectedInput;
         let epsilonInput; // the zero slippage input
 
-        if (tokenIn.address === this._carbAddress) { // carb => token
+        if (tokenIn.address === this._grphAddress) { // carb => token
             const {x, y} = toPool;
             epsilonInput = new BigNumber(tokenOutAmount).multipliedBy(x).div(y).toString();
             expectedInput = this.getInputFor(tokenOutAmount, x, y).toString();
-        } else if (tokenOut.address === this._carbAddress) { // token => carb
+        } else if (tokenOut.address === this._grphAddress) { // token => carb
             const {x, y} = fromPool;
             epsilonInput = new BigNumber(tokenOutAmount).multipliedBy(y).dividedToIntegerBy(x).toString();
             expectedInput = this.getInputFor(tokenOutAmount, y, x).toString();
@@ -136,16 +136,11 @@ module.exports = class SwapPriceService {
 
     getSwapFees(fromToken, toToken, amount, pool) {
         const fees = 0.0025;
-        if (fromToken.address === this._carbAddress.toLowerCase()) {
+        if (fromToken.address === this._grphAddress.toLowerCase()) {
             return parseFloat(amount) * fees;
         }
         const {expectedAmount} = this.getRatesForInput(fromToken, toToken, new BigNumber(amount).shiftedBy(fromToken.decimals), pool, pool);
         return new BigNumber(expectedAmount).shiftedBy(-8).multipliedBy(fees).toNumber().toFixed(8);
-    }
-
-    getSwapRewards(carbToken, graphToken, graphPool, amount) {
-        const {expectedAmount} = this.getRatesForInput(carbToken, graphToken, new BigNumber(amount).shiftedBy(graphToken.decimals), graphPool, graphPool);
-        return new BigNumber(expectedAmount).shiftedBy(-8);
     }
 
 
@@ -157,9 +152,7 @@ module.exports = class SwapPriceService {
                                   toAmount,
                                   fromPool,
                                   toPool,
-                                  carbToken,
-                                  graphToken,
-                                  graphPool
+                                  grphToken,
                               }) {
         const srcAmount = isFrom ? fromAmount : toAmount;
         let rateResult;
@@ -177,10 +170,14 @@ module.exports = class SwapPriceService {
         const price_decimals = isFrom ? -toToken.decimals : fromToken.decimals;
         const expectedExchangeRate = !price || price === "NaN" ? "0.000" : new BigNumber(price).shiftedBy(price_decimals).toNumber().toFixed(toToken.decimals);
 
-        const isFromZilToCarb = fromToken.symbol.toLowerCase() === "zil" && toToken.symbol.toLowerCase() === "carb";
+        const grphAddresses = [
+            "0xc2e8a69f162d59935430eb936467f23ff4091f27",
+            "0x34e77f91fba80c6555fdf4a23fb132abbace8aaf",
+        ].map(add => add.toLowerCase().trim());
 
-        const swapFees = isFromZilToCarb ? "0.000" : this.getSwapFees(fromToken, carbToken, srcAmount, fromPool ? fromPool : toPool);
-        const swapRewards = isFromZilToCarb ? "0.000" : this.getSwapRewards(carbToken, graphToken, graphPool, swapFees);
+        const isFromZilToGrph = fromToken.address.trim() === "0x0000000000000000000000000000000000000000" && grphAddresses.includes(toToken.address.toLowerCase().trim());
+
+        const swapFees = isFromZilToGrph ? "0.000" : this.getSwapFees(fromToken, grphToken, srcAmount, fromPool ? fromPool : toPool);
 
         return {
             ...rateResult,
@@ -189,7 +186,6 @@ module.exports = class SwapPriceService {
             isInsufficientReserves: (!price || price === "NaN" || bigAmount.isNaN() || (new BigNumber(srcAmount).gt(0) && new BigNumber(expectedExchangeRate).eq(0))) && new BigNumber(srcAmount).gt(0),
             expectedSlippage: new BigNumber(rateResult.slippage).shiftedBy(-2).toNumber(),
             swapFees,
-            swapRewards,
         };
     }
 }
